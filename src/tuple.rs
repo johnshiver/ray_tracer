@@ -3,6 +3,7 @@ extern crate num;
 use std::ops::{Add, Sub, Neg, Mul, Div};
 use std::error::Error;
 use std::fmt;
+use std::borrow::BorrowMut;
 
 const EPSILON: f64 = 0.00001;
 
@@ -14,7 +15,7 @@ fn equal_f64(a: f64, b: f64) -> bool {
     return false;
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Tuple {
     x: f64,
     y: f64,
@@ -126,6 +127,23 @@ impl Tuple {
     }
 }
 
+impl Tuple {
+    pub fn is_unit_vector(&self) -> Result<bool, TupleNotVectorError> {
+        let is_vec_res= self.is_vector();
+        match is_vec_res {
+            Err(e) => Err(e),
+            _ => {}
+        }
+
+        let res = magnitude(self.copy());
+        match res {
+            Err(e) => Err(e),
+            _ => {}
+        }
+        Ok(m == 1.0)
+    }
+}
+
 // Errors --------------------------------------------------
 #[derive(Debug)]
 struct TupleNotVectorError {
@@ -165,6 +183,11 @@ fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
     let magnitude = (vector.x.powi(2) + vector.y.powi(2) + vector.z.powi(2) + vector.w.powi(2)).sqrt();
     Ok(magnitude)
 }
+
+// takes arbitrary vector and returns a unit vector
+//fn normalize_vector(vector: Tuple) -> Result<Tuple, TupleNotVectorError> {
+//
+//}
 
 // Tests --------------------------------------------------------
 
@@ -323,5 +346,23 @@ mod tests {
             Ok(m) => assert!(false, "this should have been an error"),
             Err(e) => assert_eq!(expected, e)
         }
+    }
+
+    #[test]
+    fn is_unit_vector_cases() {
+        let a = new_vector(1.0, 0.0, 0.0);
+        let expected = 1.0;
+        let res = magnitude(a);
+        match res {
+            Ok(m) => assert_eq!(m, expected),
+            Err(e) => assert!(false, "error calculating magnitude when there should be none")
+        }
+
+        let is_uv_res = a.is_unit_vector();
+        match is_uv_res {
+            Ok(m) => assert_eq!(m, expected),
+            Err(e) => assert!(false, "error calculating is_unit_vector when there should be none")
+        }
+
     }
 }
