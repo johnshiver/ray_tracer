@@ -1,6 +1,8 @@
 extern crate num;
 
 use std::ops::{Add, Sub, Neg, Mul, Div};
+use std::error::Error;
+use std::fmt;
 
 const EPSILON: f64 = 0.00001;
 
@@ -50,12 +52,12 @@ impl Add for Tuple {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        return Tuple{
+        return Tuple {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
             w: self.w + other.w,
-        }
+        };
     }
 }
 
@@ -63,12 +65,12 @@ impl Sub for Tuple {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        return Tuple{
+        return Tuple {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
             w: self.w - other.w,
-        }
+        };
     }
 }
 
@@ -89,7 +91,7 @@ impl Mul<f64> for Tuple {
     type Output = Self;
 
     fn mul(self, scalar: f64) -> Self {
-        Tuple{
+        Tuple {
             x: self.x * scalar,
             y: self.y * scalar,
             z: self.z * scalar,
@@ -102,7 +104,7 @@ impl Div<f64> for Tuple {
     type Output = Self;
 
     fn div(self, scalar: f64) -> Self {
-        Tuple{
+        Tuple {
             x: self.x / scalar,
             y: self.y / scalar,
             z: self.z / scalar,
@@ -124,9 +126,51 @@ impl Tuple {
     }
 }
 
+// Errors --------------------------------------------------
+#[derive(Debug)]
+struct TupleNotVectorError {
+    details: String
+}
+
+impl TupleNotVectorError {
+    fn new(msg: &str) -> TupleNotVectorError {
+        TupleNotVectorError { details: msg.to_string() }
+    }
+}
+
+impl fmt::Display for TupleNotVectorError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for TupleNotVectorError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+impl PartialEq for TupleNotVectorError {
+    fn eq(&self, other: &Self) -> bool {
+        self.details == other.details
+    }
+}
+
+// Functions ------------------------------------------------------------------------
+
+fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
+    if !vector.is_vector() {
+        return Err(TupleNotVectorError::new("tuple passed to magnitude must be a vector"));
+    }
+    let magnitude = (vector.x.powi(2) + vector.y.powi(2) + vector.z.powi(2) + vector.w.powi(2)).sqrt();
+    Ok(magnitude)
+}
+
+// Tests --------------------------------------------------------
+
 #[cfg(test)]
 mod tests {
-    use crate::tuple::{new_point, new_vector, Tuple};
+    use crate::tuple::{new_point, new_vector, Tuple, magnitude, TupleNotVectorError};
 
     #[test]
     fn new_vector_is_vector() {
@@ -164,9 +208,9 @@ mod tests {
 
     #[test]
     fn add_tuples() {
-        let a = Tuple{x:3.0, y:-2.0, z:5.0, w:1.0};
-        let b = Tuple{x:-2.0, y:3.0, z:1.0, w:0.0};
-        let expected = Tuple{x: 1.0, y:1.0, z: 6.0, w: 1.0};
+        let a = Tuple { x: 3.0, y: -2.0, z: 5.0, w: 1.0 };
+        let b = Tuple { x: -2.0, y: 3.0, z: 1.0, w: 0.0 };
+        let expected = Tuple { x: 1.0, y: 1.0, z: 6.0, w: 1.0 };
 
         let res = a + b;
         assert_eq!(res, expected);
@@ -196,7 +240,7 @@ mod tests {
     }
 
     #[test]
-    fn sub_two_vectors(){
+    fn sub_two_vectors() {
         let a = new_vector(3.0, 2.0, 1.0);
         let b = new_vector(5.0, 6.0, 7.0);
         let expected = new_vector(-2.0, -4.0, -6.0);
@@ -207,23 +251,77 @@ mod tests {
     }
 
     #[test]
-    fn neg_tuple(){
-        let a = Tuple{x: 1.0, y: -2.0, z: 3.0, w: -4.0};
-        let expected = Tuple{x: -1.0, y: 2.0, z: -3.0, w: 4.0};
+    fn neg_tuple() {
+        let a = Tuple { x: 1.0, y: -2.0, z: 3.0, w: -4.0 };
+        let expected = Tuple { x: -1.0, y: 2.0, z: -3.0, w: 4.0 };
         assert_eq!(-a, expected);
     }
 
     #[test]
-    fn mul_tuple(){
-        let a = Tuple{x: 1.0, y: -2.0, z: 3.0, w: -4.0};
-        let expected = Tuple{x: 3.5, y: -7.0, z: 10.5, w: -14.0};
+    fn mul_tuple() {
+        let a = Tuple { x: 1.0, y: -2.0, z: 3.0, w: -4.0 };
+        let expected = Tuple { x: 3.5, y: -7.0, z: 10.5, w: -14.0 };
         assert_eq!(a * 3.5, expected);
     }
 
     #[test]
-    fn div_tuple(){
-        let a = Tuple{x: 1.0, y: -2.0, z: 3.0, w: -4.0};
-        let expected = Tuple{x: 0.5, y: -1.0, z: 1.5, w: -2.0};
+    fn div_tuple() {
+        let a = Tuple { x: 1.0, y: -2.0, z: 3.0, w: -4.0 };
+        let expected = Tuple { x: 0.5, y: -1.0, z: 1.5, w: -2.0 };
         assert_eq!(a / 2.0, expected);
+    }
+
+    #[test]
+    fn magnitude_success() {
+        let a = new_vector(1.0, 0.0, 0.0);
+        let expected = 1.0;
+        let res = magnitude(a);
+        match res {
+            Ok(m) => assert_eq!(m, expected),
+            Err(e) => assert!(false, "error calculating magnitude when there should be none")
+        }
+
+        let b = new_vector(0.0, 1.0, 0.0);
+        let expected = 1.0;
+        let res = magnitude(b);
+        match res {
+            Ok(m) => assert_eq!(m, expected),
+            Err(e) => assert!(false, "error calculating magnitude when there should be none")
+        }
+
+        let c = new_vector(0.0, 0.0, 1.0);
+        let expected = 1.0;
+        let res = magnitude(c);
+        match res {
+            Ok(m) => assert_eq!(m, expected),
+            Err(e) => assert!(false, "error calculating magnitude when there should be none")
+        }
+
+        let d = new_vector(1.0, 2.0, 3.0);
+        let expected = 14.0_f64.sqrt();
+        let res = magnitude(d);
+        match res {
+            Ok(m) => assert_eq!(m, expected),
+            Err(e) => assert!(false, "error calculating magnitude when there should be none")
+        }
+
+        let e = new_vector(-1.0, -2.0, -3.0);
+        let expected = 14.0_f64.sqrt();
+        let res = magnitude(e);
+        match res {
+            Ok(m) => assert_eq!(m, expected),
+            Err(e) => assert!(false, "error calculating magnitude when there should be none")
+        }
+    }
+
+    #[test]
+    fn magnitude_error() {
+        let e = new_point(-1.0, -2.0, -3.0);
+        let expected = TupleNotVectorError::new("tuple passed to magnitude must be a vector");
+        let res = magnitude(e);
+        match res {
+            Ok(m) => assert!(false, "this should have been an error"),
+            Err(e) => assert_eq!(expected, e)
+        }
     }
 }
