@@ -15,7 +15,7 @@ fn equal_f64(a: f64, b: f64) -> bool {
     return false;
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Copy)]
 pub struct Tuple {
     x: f64,
     y: f64,
@@ -130,17 +130,15 @@ impl Tuple {
 impl Tuple {
     pub fn is_unit_vector(&self) -> Result<bool, TupleNotVectorError> {
         let is_vec_res= self.is_vector();
-        match is_vec_res {
-            Err(e) => Err(e),
-            _ => {}
+        if !is_vec_res {
+            return Err(TupleNotVectorError::new("is_unit_vector: tuple is not a vector"))
         }
 
-        let res = magnitude(self.copy());
+        let res = magnitude(self.clone());
         match res {
+            Ok(m) => Ok(m == 1.0),
             Err(e) => Err(e),
-            _ => {}
         }
-        Ok(m == 1.0)
     }
 }
 
@@ -360,7 +358,7 @@ mod tests {
 
         let is_uv_res = a.is_unit_vector();
         match is_uv_res {
-            Ok(m) => assert_eq!(m, expected),
+            Ok(m) => assert_eq!(m, true),
             Err(e) => assert!(false, "error calculating is_unit_vector when there should be none")
         }
 
