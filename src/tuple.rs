@@ -2,6 +2,7 @@ extern crate num;
 
 use std::error::Error;
 use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 const EPSILON: f64 = 0.00001;
@@ -28,6 +29,17 @@ pub fn new_point(x: f64, y: f64, z: f64) -> Tuple {
 
 pub fn new_vector(x: f64, y: f64, z: f64) -> Tuple {
     Tuple { x, y, z, w: 0.0 }
+}
+
+impl Display for Tuple {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let tuple_type = if self.is_vector() { "vector" } else { "point" }.to_string();
+        write!(
+            f,
+            "{} x: {} y: {} z: {}",
+            tuple_type, self.x, self.y, self.z
+        )
+    }
 }
 
 impl Eq for Tuple {}
