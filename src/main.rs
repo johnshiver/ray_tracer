@@ -1,11 +1,16 @@
 use std::borrow::Borrow;
 use std::{thread, time};
 
+mod color;
 mod environment;
 mod projectile;
 mod tuple;
 
 fn main() {
+    simulate_projectile();
+}
+
+fn simulate_projectile() {
     let gravity = tuple::new_vector(0.0, -9.8, 0.0);
     let wind = tuple::new_vector(-1.0, 0.0, 0.0);
     let env = environment::new_environment(gravity, wind);
