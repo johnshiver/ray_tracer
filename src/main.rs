@@ -15,11 +15,17 @@ fn main() {
     let mut projectile = projectile::new_projectile(proj_pos, proj_vel);
 
     println!("env + project created, simulation starting...");
-    println!("projectile starting at: {}", projectile.position);
+    println!(
+        "projectile starting at:\n\t{}\n\tvelocity {}",
+        projectile.position, projectile.velocity
+    );
     for i in 1..101 {
         projectile = environment::tick(env.clone(), projectile);
 
-        println!("projectile now at: {}", projectile.position);
+        println!(
+            "projectile now at:\n\t{}\n\tvelocity {}",
+            projectile.position, projectile.velocity
+        );
         thread::sleep(time::Duration::from_secs(1));
     }
 }
