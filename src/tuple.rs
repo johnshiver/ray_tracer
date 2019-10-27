@@ -3,7 +3,6 @@ extern crate num;
 use std::ops::{Add, Sub, Neg, Mul, Div};
 use std::error::Error;
 use std::fmt;
-use std::borrow::BorrowMut;
 
 const EPSILON: f64 = 0.00001;
 
@@ -144,7 +143,7 @@ impl Tuple {
 
 // Errors --------------------------------------------------
 #[derive(Debug)]
-struct TupleNotVectorError {
+pub struct TupleNotVectorError {
     details: String
 }
 
@@ -182,6 +181,19 @@ fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
     Ok(magnitude)
 }
 
+fn normalize(vector: Tuple) -> Result<Tuple, TupleNotVectorError> {
+    if !vector.is_vector() {
+        return Err(TupleNotVectorError::new("tuple passed to normalize must be a vector"));
+    }
+    let vector_mag = magnitude(vector.clone()).unwrap();
+    return Ok(Tuple{
+        x: vector.x / vector_mag,
+        y: vector.y / vector_mag,
+        z: vector.z / vector_mag,
+        w: vector.w / vector_mag,
+    })
+}
+
 // takes arbitrary vector and returns a unit vector
 //fn normalize_vector(vector: Tuple) -> Result<Tuple, TupleNotVectorError> {
 //
@@ -191,7 +203,7 @@ fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::tuple::{new_point, new_vector, Tuple, magnitude, TupleNotVectorError};
+    use crate::tuple::{new_point, new_vector, Tuple, magnitude, TupleNotVectorError, normalize};
 
     #[test]
     fn new_vector_is_vector() {
@@ -361,6 +373,44 @@ mod tests {
             Ok(m) => assert_eq!(m, true),
             Err(e) => assert!(false, "error calculating is_unit_vector when there should be none")
         }
-
     }
+
+    #[test]
+    fn normalize_success() {
+        let a = new_vector(4.0, 0.0, 0.0);
+        let expected = new_vector(1.0, 0.0, 0.0);
+
+        let normalize_res = normalize(a);
+        match normalize_res {
+            Ok(nv) => assert_eq!(nv, expected),
+            Err(_e) => assert!(false, "error calculating normalize_res when there should be none")
+        }
+
+        let a = new_vector(1.0, 2.0, 3.0);
+        let expected = new_vector(0.26726, 0.53452, 0.80178);
+        let normalize_res = normalize(a);
+        match normalize_res {
+            Ok(nv) => assert_eq!(nv, expected),
+            Err(_e) => assert!(false, "error calculating normalize_res when there should be none")
+        }
+
+        let a = new_vector(1.0, 2.0, 3.0);
+        let expected = new_vector(0.26726, 0.53452, 0.80178);
+        let normalize_res = normalize(a);
+        let normalized_vector = normalize_res.unwrap();
+        let expected_mag = 1.0;
+        assert_eq!(expected_mag, magnitude(normalized_vector).unwrap());
+    }
+
+    #[test]
+    fn normalize_failure() {
+        let e = new_point(-1.0, -2.0, -3.0);
+        let expected = TupleNotVectorError::new("tuple passed to normalize must be a vector");
+        let res = normalize(e);
+        match res {
+            Ok(m) => assert!(false, "this should have been an error"),
+            Err(e) => assert_eq!(expected, e)
+        }
+    }
+
 }
