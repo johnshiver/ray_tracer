@@ -1,6 +1,7 @@
 use std::borrow::Borrow;
 use std::{thread, time};
 
+mod canvas;
 mod color;
 mod environment;
 mod projectile;

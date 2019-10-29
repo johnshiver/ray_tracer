@@ -12,12 +12,6 @@ impl Display for Projectile {
     }
 }
 
-//impl Display for Projectile {
-//    fn fmt(&self, f: &mut Formatter) -> Result {
-//        write!(f, "position: {}", self.position)
-//    }
-//}
-
 pub fn new_projectile(position: Tuple, velocity: Tuple) -> Projectile {
     Projectile { position, velocity }
 }

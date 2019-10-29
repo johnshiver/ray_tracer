@@ -1,11 +1,7 @@
 use crate::tuple::{new_point, Tuple};
 use std::ops::{Add, Mul, Sub};
 
-const RED: i8 = 0;
-const GREEN: i8 = 1;
-const BLUE: i8 = 2;
-
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Color {
     components: Tuple,
 }
