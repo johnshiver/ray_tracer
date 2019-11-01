@@ -1,34 +1,38 @@
 use crate::color::{new_color, Color};
 use num::range;
 
-pub const WIDTH: usize = 10;
-pub const HEIGHT: usize = 20;
-
 pub struct Canvas {
-    pixels: [[Color; WIDTH]; HEIGHT],
+    height: u32,
+    width: u32,
+    pixels: Vec<Color>,
 }
 
 impl Canvas {
-    fn pixel_at(&self, x: usize, y: usize) -> Color {
-        self.pixels[y][x]
+    fn buffer_size(&self) -> u32 {
+        self.height * self.width
     }
-
-    fn write_pixel(&mut self, x: usize, y: usize, c: Color) {
-        self.pixels[y][x] = c
-    }
-}
-
-pub fn new() -> Canvas {
-    let default = new_color(0.0, 0.0, 0.0);
-    let mut pixels: [[Color; WIDTH]; HEIGHT] = [[default; WIDTH]; HEIGHT];
-
-    for i in 0..HEIGHT - 1 {
-        for j in 0..WIDTH - 1 {
-            pixels[i][j] = new_color(0.0, 0.0, 0.0);
+    fn get_offset(&self, x: u32, y: u32) -> Option<usize> {
+        let offset = x * (y * self.width);
+        if offset < self.buffer_size() {
+            Some(offset as usize)
+        } else {
+            None
         }
     }
 
-    Canvas { pixels }
+    pub fn get_pixel(&self, x: u32, y: u32) -> Option<Color> {}
+}
+
+pub fn new(height: u32, width: u32) -> Canvas {
+    let default = new_color(0.0, 0.0, 0.0);
+    let size = height * width;
+    let mut pixels: vec![default; size];
+
+    Canvas {
+        height,
+        width,
+        pixels,
+    }
 }
 
 #[cfg(test)]
