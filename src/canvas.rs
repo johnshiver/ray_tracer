@@ -1,60 +1,51 @@
-use crate::color::{new_color, Color};
-use num::range;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
+use crate::color::{new_color, Color};
+
 pub struct Canvas {
-    height: u32,
-    width: u32,
-    pixels: Vec<Color>,
+    height: usize,
+    width: usize,
+    pixels: Vec<Vec<Color>>,
 }
 
 impl Canvas {
-    fn buffer_size(&self) -> u32 {
-        self.height * self.width
-    }
-
-    fn get_offset(&self, x: u32, y: u32) -> Option<usize> {
-        let offset = x * (y * self.width);
-        if offset < self.buffer_size() {
-            Some(offset as usize)
+    pub fn get_pixel(&self, x: usize, y: usize) -> Option<Color> {
+        let pos = x * y;
+        if pos <= self.width * self.height {
+            Some(self.pixels[y][x])
         } else {
             None
         }
     }
 
-    pub fn get_pixel(&self, x: u32, y: u32) -> Option<Color> {
-        match self.get_offset(x, y) {
-            Some(offset) => Some(self.pixels[offset]),
-            None => None,
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: Color) -> bool {
+        let pos = x * y;
+        if pos <= self.width * self.height {
+            self.pixels[y][x] = color;
+            true
+        } else {
+            false
         }
     }
 
-    pub fn set_pixel(&mut self, x: u32, y: u32, color: Color) -> bool {
-        match self.get_offset(x, y) {
-            Some(offset) => {
-                self.pixels[offset] = color;
-                true
-            }
-            None => false,
-        }
-    }
-
-    pub fn write_image(&self, filename: &str) -> std::io::Result<()> {
+    pub fn to_ppm(&self, filename: &str) -> std::io::Result<()> {
         let path = Path::new(filename);
         let mut file = File::create(&path)?;
-        let header = format!("P6 {} {} 255\n", self.width, self.height);
-        file.write(header.as_bytes())?;
-        file.write(&self.pixels)?;
+        file.write(self.get_ppm_header().as_bytes())?;
         Ok(())
+    }
+
+    pub fn get_ppm_header(&self) -> String {
+        format!("P3\n{} {}\n255\n", self.height, self.width)
     }
 }
 
-pub fn new(height: u32, width: u32) -> Canvas {
+pub fn new(height: usize, width: usize) -> Canvas {
     let default = new_color(0.0, 0.0, 0.0);
     let size = height * width;
-    let mut pixels = vec![default; size as usize];
+    let pixels = vec![vec![default; width]; height];
 
     Canvas {
         height,
@@ -66,8 +57,6 @@ pub fn new(height: u32, width: u32) -> Canvas {
 #[cfg(test)]
 mod tests {
     use crate::canvas::new;
-    use crate::canvas::HEIGHT;
-    use crate::canvas::WIDTH;
     use crate::color::new_color;
 
     #[test]
@@ -76,9 +65,16 @@ mod tests {
         let width = 30;
         let test_canvas = new(height, width);
         let expected = new_color(0.0, 0.0, 0.0);
-        for i in 0..height - 1 {
-            for j in 0..width - 1 {
-                assert_eq!(test_canvas.get_pixel(i, j), expected);
+        for y in 0..height - 1 {
+            for x in 0..width - 1 {
+                match test_canvas.get_pixel(x, y) {
+                    None => assert!(
+                        false,
+                        "get_pixel should have returned a color x: {} y: {}",
+                        x, y
+                    ),
+                    Some(pixel_color) => assert_eq!(expected, pixel_color),
+                }
             }
         }
     }
@@ -89,7 +85,19 @@ mod tests {
         let width = 30;
         let mut test_canvas = new(height, width);
         let expected = new_color(1.0, 0.0, 0.0);
-        test_canvas.write_pixel(2, 3, expected);
-        assert_eq!(test_canvas.get_pixel(2, 3), expected);
+        test_canvas.set_pixel(2, 3, expected);
+        match test_canvas.get_pixel(2, 3) {
+            Some(color) => assert_eq!(expected, color),
+            None => assert!(false, "get_pixel should not have returned an error"),
+        }
+    }
+
+    #[test]
+    fn ppm_header() {
+        let height = 5;
+        let width = 3;
+        let test_canvas = new(height, width);
+        let expected = "P3\n5 3\n255\n";
+        assert_eq!(expected, test_canvas.get_ppm_header())
     }
 }

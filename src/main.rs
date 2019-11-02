@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::{thread, time};
 
 mod canvas;

@@ -1,5 +1,5 @@
 use crate::tuple::Tuple;
-use std::fmt::{Display, Error, Formatter, Result};
+use std::fmt::{Display, Formatter, Result};
 
 pub struct Projectile {
     pub position: Tuple, // point
