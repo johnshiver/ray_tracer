@@ -20,7 +20,7 @@ impl Canvas {
         }
     }
 
-    pub fn set_pixel(&mut self, x: usize, y: usize, color: Color) -> bool {
+    pub fn write_pixel(&mut self, x: usize, y: usize, color: Color) -> bool {
         let pos = x * y;
         if pos <= self.width * self.height {
             self.pixels[y][x] = color;
@@ -40,11 +40,22 @@ impl Canvas {
     pub fn get_ppm_header(&self) -> String {
         format!("P3\n{} {}\n255\n", self.height, self.width)
     }
+
+    pub fn get_ppm_pixel_data(&self) -> String {
+        let mut pixel_data = String::new();
+        for y in 0..self.height - 1 {
+            for x in 0..self.width - 1 {
+                let pixel = self.pixels[y][x];
+                let format_string = format!("{} ", pixel);
+                pixel_data.push_str(format_string.as_ref())
+            }
+        }
+        pixel_data
+    }
 }
 
-pub fn new(height: usize, width: usize) -> Canvas {
+pub fn new(width: usize, height: usize) -> Canvas {
     let default = new_color(0.0, 0.0, 0.0);
-    let size = height * width;
     let pixels = vec![vec![default; width]; height];
 
     Canvas {
@@ -85,7 +96,7 @@ mod tests {
         let width = 30;
         let mut test_canvas = new(height, width);
         let expected = new_color(1.0, 0.0, 0.0);
-        test_canvas.set_pixel(2, 3, expected);
+        test_canvas.write_pixel(2, 3, expected);
         match test_canvas.get_pixel(2, 3) {
             Some(color) => assert_eq!(expected, color),
             None => assert!(false, "get_pixel should not have returned an error"),
@@ -99,5 +110,21 @@ mod tests {
         let test_canvas = new(height, width);
         let expected = "P3\n5 3\n255\n";
         assert_eq!(expected, test_canvas.get_ppm_header())
+    }
+
+    #[test]
+    fn ppm_pixel_data() {
+        let height = 5;
+        let width = 3;
+        let mut test_canvas = new(height, width);
+        let c1 = new_color(1.5, 0.0, 0.0);
+        let c2 = new_color(0.0, 0.5, 0.0);
+        let c3 = new_color(-0.5, 0.0, 1.0);
+        test_canvas.write_pixel(0, 0, c1);
+        test_canvas.write_pixel(2, 1, c2);
+        test_canvas.write_pixel(4, 2, c3);
+
+        let expected = "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 128 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 255\n";
+        assert_eq!(expected, test_canvas.get_ppm_pixel_data())
     }
 }
