@@ -65,22 +65,23 @@ impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(
             f,
-            "{} {} {}", 0, 0, 0
-//            scale_color_val(self.red()),
-//            scale_color_val(self.green()),
-//            scale_color_val(self.blue()),
+            "{} {} {}",
+            scale_color_val(self.red()),
+            scale_color_val(self.green()),
+            scale_color_val(self.blue()),
         )
     }
 }
 
 fn scale_color_val(val: f64) -> i16 {
     let mut x = val * 255 as f64;
+
     if x >= 255.0 {
         255
     } else if x <= 0.0 {
         0
     } else {
-        x as i16
+        x.ceil() as i16
     }
 }
 

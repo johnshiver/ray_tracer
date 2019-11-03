@@ -38,17 +38,21 @@ impl Canvas {
     }
 
     pub fn get_ppm_header(&self) -> String {
-        format!("P3\n{} {}\n255\n", self.height, self.width)
+        format!("P3\n{} {}\n255\n", self.width, self.height)
     }
 
     pub fn get_ppm_pixel_data(&self) -> String {
         let mut pixel_data = String::new();
-        for y in 0..self.height - 1 {
-            for x in 0..self.width - 1 {
+        for y in 0..self.height {
+            for x in 0..self.width {
                 let pixel = self.pixels[y][x];
-                let format_string = format!("{} ", pixel);
-                pixel_data.push_str(format_string.as_ref())
+                let format_string = format!("{}", pixel);
+                pixel_data.push_str(format_string.as_ref());
+                if x != self.width - 1 {
+                    pixel_data.push_str(" ")
+                }
             }
+            pixel_data.push_str("\n")
         }
         pixel_data
     }
@@ -76,8 +80,8 @@ mod tests {
         let width = 30;
         let test_canvas = new(height, width);
         let expected = new_color(0.0, 0.0, 0.0);
-        for y in 0..height - 1 {
-            for x in 0..width - 1 {
+        for y in 0..height {
+            for x in 0..width {
                 match test_canvas.get_pixel(x, y) {
                     None => assert!(
                         false,
