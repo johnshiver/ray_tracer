@@ -10,12 +10,17 @@ mod tuple;
 
 fn main() {
     //    simulate_projectile();
-    let mut canvas = new(10, 10);
-    let c = new_color(1.5, 0.0, 0.0);
-    canvas.write_pixel(0, 0, c);
-    canvas.write_pixel(1, 0, c);
-    canvas.write_pixel(2, 0, c);
-    canvas.write_pixel(3, 0, c);
+    let width = 500;
+    let height = 500;
+    let mut canvas = new(width, height);
+    let red = new_color(1.0, 0.0, 0.0);
+    let blue = new_color(0.0, 0.0, 1.0);
+    for x in 0..width {
+        canvas.write_pixel(x, 0, red);
+    }
+    for y in 1..height {
+        canvas.write_pixel(0, y, blue);
+    }
     canvas.to_ppm("test_ppm.ppm");
 }
 
