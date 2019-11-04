@@ -34,6 +34,7 @@ impl Canvas {
         let path = Path::new(filename);
         let mut file = File::create(&path)?;
         file.write(self.get_ppm_header().as_bytes())?;
+        file.write(self.get_ppm_pixel_data().as_bytes())?;
         Ok(())
     }
 

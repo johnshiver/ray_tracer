@@ -1,3 +1,5 @@
+use crate::canvas::new;
+use crate::color::new_color;
 use std::{thread, time};
 
 mod canvas;
@@ -7,7 +9,14 @@ mod projectile;
 mod tuple;
 
 fn main() {
-    simulate_projectile();
+    //    simulate_projectile();
+    let mut canvas = new(10, 10);
+    let c = new_color(1.5, 0.0, 0.0);
+    canvas.write_pixel(0, 0, c);
+    canvas.write_pixel(1, 0, c);
+    canvas.write_pixel(2, 0, c);
+    canvas.write_pixel(3, 0, c);
+    canvas.to_ppm("test_ppm.ppm");
 }
 
 fn simulate_projectile() {
