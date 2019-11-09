@@ -74,7 +74,7 @@ impl std::fmt::Display for Color {
 }
 
 fn scale_color_val(val: f64) -> i16 {
-    let mut x = val * 255 as f64;
+    let x = val * 255 as f64;
 
     if x >= 255.0 {
         255

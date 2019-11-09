@@ -25,7 +25,6 @@ fn create_test_image() {
         canvas.write_pixel(x, 0, red);
         canvas.write_pixel(x, 1, red);
         canvas.write_pixel(x, 2, red);
-
     }
     for y in 1..height {
         canvas.write_pixel(0, y, blue);
@@ -41,17 +40,25 @@ fn simulate_projectile() {
     let wind = new_vector(0.01, 0.0, 0.0);
     let mut c = canvas::new(900, 550);
     let env = new_environment(gravity, wind);
-    let blue = new_color(0.0, 0.0, 1.0);
+    let white = new_color(1.0, 1.0, 1.0);
 
     let alpha = 40.0;
-    c.write_pixel((p.position.x * alpha)  as usize, (p.position.y * alpha) as usize, blue);
+    c.write_pixel(
+        (p.position.x * alpha) as usize,
+        (p.position.y * alpha) as usize,
+        white,
+    );
     while p.position.x >= 0.0 && p.position.y >= 0.0 {
         p = environment::tick(env, p);
         println!(
             "projectile now at:\n\t{}\n\tvelocity {}",
             p.position, p.velocity
         );
-        c.write_pixel((p.position.x * alpha) as usize, (p.position.y * alpha) as usize, blue);
+        c.write_pixel(
+            (p.position.x * alpha) as usize,
+            (p.position.y * alpha) as usize,
+            white,
+        );
     }
     c.to_ppm("rocket_shot.ppm");
 }
