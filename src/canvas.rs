@@ -70,7 +70,7 @@ impl Canvas {
 }
 
 pub fn new(width: usize, height: usize) -> Canvas {
-    let default = new_color(0.0, 0.0, 0.0);
+    let default = new_color(1.0, 1.0, 1.0);
     let pixels = vec![vec![default; width]; height];
 
     Canvas {
