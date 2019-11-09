@@ -7,6 +7,7 @@ use crate::tuple::{new_point, new_vector, normalize};
 mod canvas;
 mod color;
 mod environment;
+mod matrix;
 mod projectile;
 mod tuple;
 
