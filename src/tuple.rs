@@ -181,7 +181,7 @@ impl PartialEq for TupleNotVectorError {
 
 // Functions ------------------------------------------------------------------------
 
-fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
+pub fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
     if !vector.is_vector() {
         return Err(TupleNotVectorError::new(
             "tuple passed to magnitude must be a vector",
@@ -192,7 +192,7 @@ fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
     Ok(magnitude)
 }
 
-fn normalize(vector: Tuple) -> Result<Tuple, TupleNotVectorError> {
+pub fn normalize(vector: Tuple) -> Result<Tuple, TupleNotVectorError> {
     if !vector.is_vector() {
         return Err(TupleNotVectorError::new(
             "tuple passed to normalize must be a vector",

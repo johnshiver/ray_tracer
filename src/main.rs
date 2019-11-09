@@ -1,6 +1,8 @@
 use crate::canvas::new;
 use crate::color::new_color;
-use std::{thread, time};
+use crate::environment::new_environment;
+use crate::projectile::new_projectile;
+use crate::tuple::{new_point, new_vector, normalize};
 
 mod canvas;
 mod color;
@@ -32,31 +34,24 @@ fn create_test_image() {
 }
 
 fn simulate_projectile() {
-    let gravity = tuple::new_vector(0.0, -1.0, 0.0);
-    let wind = tuple::new_vector(0.0, 0.0, 0.0);
-    let env = environment::new_environment(gravity, wind);
-    let mut canvas = canvas::new(200, 200);
-    let red = color::new_color(1.0, 0.0, 0.0);
+    let start = new_point(0.0, 1.0, 0.0);
+    let velocity = normalize(new_vector(1.0, 1.8, 0.0) * 11.25).unwrap();
+    let mut p = new_projectile(start, velocity);
+    let gravity = new_vector(0.0, -0.1, 0.0);
+    let wind = new_vector(0.01, 0.0, 0.0);
+    let mut c = canvas::new(900, 550);
+    let env = new_environment(gravity, wind);
+    let blue = new_color(0.0, 0.0, 1.0);
 
-    let proj_pos = tuple::new_point(0.0, 0.0, 0.0);
-    let proj_vel = tuple::new_vector(10.0, 10.0, 0.0);
-    let mut projectile = projectile::new_projectile(proj_pos, proj_vel);
-
-    println!("env + project created, simulation starting...");
-    println!(
-        "projectile starting at:\n\t{}\n\tvelocity {}",
-        projectile.position, projectile.velocity
-    );
-
-    canvas.write_pixel(projectile.position.x as usize, projectile.position.y as usize, red);
-    while projectile.position.x >= 0.0 && projectile.position.y >= 0.0 {
-        projectile = environment::tick(env, projectile);
+    let alpha = 40.0;
+    c.write_pixel((p.position.x * alpha)  as usize, (p.position.y * alpha) as usize, blue);
+    while p.position.x >= 0.0 && p.position.y >= 0.0 {
+        p = environment::tick(env, p);
         println!(
             "projectile now at:\n\t{}\n\tvelocity {}",
-            projectile.position, projectile.velocity
+            p.position, p.velocity
         );
-        canvas.write_pixel(projectile.position.x as usize, projectile.position.y as usize, red);
-        thread::sleep(time::Duration::from_millis(1));
+        c.write_pixel((p.position.x * alpha) as usize, (p.position.y * alpha) as usize, blue);
     }
-    canvas.to_ppm("rocket_shot.ppm");
+    c.to_ppm("rocket_shot.ppm");
 }

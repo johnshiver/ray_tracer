@@ -22,7 +22,8 @@ impl Canvas {
 
     pub fn write_pixel(&mut self, x: usize, y: usize, color: Color) -> bool {
         if x < self.width && y < self.height {
-            self.pixels[y][x] = color;
+            // adjust y to invert graph
+            self.pixels[self.height - y -1][x] = color;
             true
         } else {
             false
