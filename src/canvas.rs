@@ -4,6 +4,8 @@ use std::path::Path;
 
 use crate::color::{new_color, Color};
 
+const DEFAULT_CANVAS_COLOR: Color = new_color(0.0, 0.0, 0.0);
+
 pub struct Canvas {
     height: usize,
     width: usize,
@@ -23,7 +25,7 @@ impl Canvas {
     pub fn write_pixel(&mut self, x: usize, y: usize, color: Color) -> bool {
         if x < self.width && y < self.height {
             // adjust y to invert graph
-            self.pixels[self.height - y -1][x] = color;
+            self.pixels[self.height - y - 1][x] = color;
             true
         } else {
             false
@@ -71,7 +73,7 @@ impl Canvas {
 }
 
 pub fn new(width: usize, height: usize) -> Canvas {
-    let default = new_color(1.0, 1.0, 1.0);
+    let default = DEFAULT_CANVAS_COLOR;
     let pixels = vec![vec![default; width]; height];
 
     Canvas {
@@ -83,7 +85,7 @@ pub fn new(width: usize, height: usize) -> Canvas {
 
 #[cfg(test)]
 mod tests {
-    use crate::canvas::new;
+    use crate::canvas::{new, DEFAULT_CANVAS_COLOR};
     use crate::color::new_color;
 
     #[test]
@@ -91,7 +93,7 @@ mod tests {
         let width = 30;
         let height = 30;
         let test_canvas = new(width, height);
-        let expected = new_color(0.0, 0.0, 0.0);
+        let expected = DEFAULT_CANVAS_COLOR;
         for y in 0..height {
             for x in 0..width {
                 match test_canvas.get_pixel(x, y) {
