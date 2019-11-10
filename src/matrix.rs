@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, Mul};
 
 const EPSILON: f64 = 0.00001;
 
@@ -49,10 +49,38 @@ impl PartialEq for M4x4 {
     }
 }
 
+impl Mul<M4x4> for M4x4{
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        let mut new_matrix= [[0.0; 4]; 4];
+        for y in 0..4 {
+            for x in 0..4 {
+                new_matrix[y][x] = cal_index_matrix_multi(self.matrix, other.matrix, x, y);
+            }
+        }
+        new_4x4(new_matrix)
+    }
+}
+
+fn cal_index_matrix_multi(m1: [[f64; 4];4], m2: [[f64; 4]; 4], x: usize, y: usize) -> f64 {
+    // for y 1, x 0 of new matrix
+    // line up row 1 for m1 and col 1 for m2
+    let row = m1[y];
+    let col = [
+        m2[0][x], m2[1][x], m2[2][x], m2[3][x],
+    ];
+
+    let mut final_val = 0.0;
+    for i in 0..4 {
+        final_val += row[i] * col[i]
+    }
+    final_val
+}
+
 pub fn new_4x4(matrix: [[f64; 4]; 4]) -> M4x4 {
     M4x4 { matrix }
 }
-
 // ----------------------------- 3x3 ------------------------------------
 
 #[derive(Debug)]
@@ -152,13 +180,13 @@ mod tests {
 
     #[test]
     fn compare_4x4_matrices() {
-        let mut m1 = [
+        let m1 = [
             [1.0, 2.0, 3.0, 4.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
             [13.5, 14.5, 15.5, 16.5],
         ];
-        let mut m2 = [
+        let m2 = [
             [1.0, 2.0, 3.0, 4.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
@@ -166,19 +194,47 @@ mod tests {
         ];
         assert_eq!(new_4x4(m1), new_4x4(m2));
 
-        let mut m3 = [
+        let m3 = [
             [1.0, 2.0, 3.0, 4.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
             [13.5, 14.5, 15.5, 16.5],
         ];
-        let mut m4 = [
+        let m4 = [
             [2.0, 3.0, 3.0, 5.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
             [13.5, 14.5, 15.5, 16.5],
         ];
+
         assert_ne!(new_4x4(m3), new_4x4(m4));
+    }
+
+    #[test]
+    fn multiply_4x4_matrices() {
+        let m1 = [
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 8.0, 7.0, 6.0],
+            [5.0, 4.0, 3.0, 2.0],
+        ];
+        let m2 = [
+            [-2.0, 1.0, 2.0, 3.0],
+            [3.0, 2.0, 1.0, -1.0],
+            [4.0, 3.0, 6.0, 5.0],
+            [1.0, 2.0, 7.0, 8.0],
+        ];
+        let expected = [
+            [20.0, 22.0, 50.0, 48.0],
+            [44.0, 54.0, 114.0, 108.0],
+            [40.0, 58.0, 110.0, 102.0],
+            [16.0, 26.0, 46.0, 42.0],
+        ];
+
+        let test_m1 = new_4x4(m1);
+        let test_m2 = new_4x4(m2);
+        let test_expected = new_4x4(expected);
+        assert_eq!(test_m1 * test_m2, test_expected);
     }
 
     #[test]
