@@ -1,5 +1,15 @@
 use std::borrow::Borrow;
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
+
+const EPSILON: f64 = 0.00001;
+
+fn equal_f64(a: f64, b: f64) -> bool {
+    let diff = a - b;
+    if num::abs(diff) < EPSILON {
+        return true;
+    }
+    false
+}
 
 struct MatrixIndex {
     x: usize,
@@ -11,14 +21,30 @@ pub struct M4x4 {
     matrix: [[f64; 4]; 4],
 }
 
-impl Index<MatrixIndex> for M4x4 {
+impl Index<&MatrixIndex> for M4x4 {
     type Output = f64;
 
-    fn index(&self, index: MatrixIndex) -> &Self::Output {
+    fn index(&self, index: &MatrixIndex) -> &Self::Output {
         match index {
             MatrixIndex { x: 0..=3, y: 0..=3 } => self.matrix[index.y][index.x].borrow(),
             _ => &-99.0,
         }
+    }
+}
+
+impl Eq for M4x4 {}
+
+impl PartialEq for M4x4 {
+    fn eq(&self, other: &Self) -> bool {
+        for y in 0..3 {
+            for x in 0..3 {
+                let mi = MatrixIndex { x, y };
+                if !(equal_f64(self[&mi], other[&mi])) {
+                    return false;
+                }
+            }
+        }
+        true
     }
 }
 
@@ -32,14 +58,30 @@ pub struct M3x3 {
     matrix: [[f64; 3]; 3],
 }
 
-impl Index<MatrixIndex> for M3x3 {
+impl Index<&MatrixIndex> for M3x3 {
     type Output = f64;
 
-    fn index(&self, index: MatrixIndex) -> &Self::Output {
+    fn index(&self, index: &MatrixIndex) -> &Self::Output {
         match index {
             MatrixIndex { x: 0..=2, y: 0..=2 } => self.matrix[index.y][index.x].borrow(),
             _ => &-99.0,
         }
+    }
+}
+
+impl Eq for M3x3 {}
+
+impl PartialEq for M3x3 {
+    fn eq(&self, other: &Self) -> bool {
+        for y in 0..2 {
+            for x in 0..2 {
+                let mi = MatrixIndex { x, y };
+                if !(equal_f64(self[&mi], other[&mi])) {
+                    return false;
+                }
+            }
+        }
+        true
     }
 }
 
@@ -79,13 +121,42 @@ mod tests {
         test_matrix[2] = [9.0, 10.0, 11.0, 12.0];
         test_matrix[3] = [13.5, 14.5, 15.5, 16.5];
         let test_m4x4 = new_4x4(test_matrix);
-        assert_eq!(test_m4x4[MatrixIndex { x: 0, y: 0 }], 1.0);
-        assert_eq!(test_m4x4[MatrixIndex { x: 3, y: 0 }], 4.0);
-        assert_eq!(test_m4x4[MatrixIndex { x: 0, y: 1 }], 5.5);
-        assert_eq!(test_m4x4[MatrixIndex { x: 2, y: 1 }], 7.5);
-        assert_eq!(test_m4x4[MatrixIndex { x: 2, y: 2 }], 11.0);
-        assert_eq!(test_m4x4[MatrixIndex { x: 0, y: 3 }], 13.5);
-        assert_eq!(test_m4x4[MatrixIndex { x: 2, y: 3 }], 15.5);
+        assert_eq!(test_m4x4[&MatrixIndex { x: 0, y: 0 }], 1.0);
+        assert_eq!(test_m4x4[&MatrixIndex { x: 3, y: 0 }], 4.0);
+        assert_eq!(test_m4x4[&MatrixIndex { x: 0, y: 1 }], 5.5);
+        assert_eq!(test_m4x4[&MatrixIndex { x: 2, y: 1 }], 7.5);
+        assert_eq!(test_m4x4[&MatrixIndex { x: 2, y: 2 }], 11.0);
+        assert_eq!(test_m4x4[&MatrixIndex { x: 0, y: 3 }], 13.5);
+        assert_eq!(test_m4x4[&MatrixIndex { x: 2, y: 3 }], 15.5);
+    }
+
+    #[test]
+    fn compare_4x4_matrices() {
+        let mut m1 = [[0.0; 4]; 4];
+        m1[0] = [1.0, 2.0, 3.0, 4.0];
+        m1[1] = [5.5, 6.5, 7.5, 8.5];
+        m1[2] = [9.0, 10.0, 11.0, 12.0];
+        m1[3] = [13.5, 14.5, 15.5, 16.5];
+
+        let mut m2 = [[0.0; 4]; 4];
+        m2[0] = [1.0, 2.0, 3.0, 4.0];
+        m2[1] = [5.5, 6.5, 7.5, 8.5];
+        m2[2] = [9.0, 10.0, 11.0, 12.0];
+        m2[3] = [13.5, 14.5, 15.5, 16.5];
+        assert_eq!(new_4x4(m1), new_4x4(m2));
+
+        let mut m3 = [[0.0; 4]; 4];
+        m3[0] = [1.0, 2.0, 3.0, 4.0];
+        m3[1] = [5.5, 6.5, 7.5, 8.5];
+        m3[2] = [9.0, 10.0, 11.0, 12.0];
+        m3[3] = [13.5, 14.5, 15.5, 16.5];
+
+        let mut m4 = [[0.0; 4]; 4];
+        m4[0] = [2.0, 3.0, 3.0, 5.0];
+        m4[1] = [5.5, 6.5, 7.5, 8.5];
+        m4[2] = [9.0, 10.0, 11.0, 12.0];
+        m4[3] = [13.5, 14.5, 15.5, 16.5];
+        assert_ne!(new_4x4(m3), new_4x4(m4));
     }
 
     #[test]
@@ -95,10 +166,36 @@ mod tests {
         test_matrix[1] = [1.0, -2.0, -7.0];
         test_matrix[2] = [0.0, 1.0, 1.0];
         let test_m3x3 = new_3x3(test_matrix);
-        assert_eq!(test_m3x3[MatrixIndex { x: 0, y: 0 }], -3.0);
-        assert_eq!(test_m3x3[MatrixIndex { x: 1, y: 1 }], -2.0);
-        assert_eq!(test_m3x3[MatrixIndex { x: 2, y: 2 }], 1.0);
-        assert_eq!(test_m3x3[MatrixIndex { x: 1, y: 2 }], 1.0);
+        assert_eq!(test_m3x3[&MatrixIndex { x: 0, y: 0 }], -3.0);
+        assert_eq!(test_m3x3[&MatrixIndex { x: 1, y: 1 }], -2.0);
+        assert_eq!(test_m3x3[&MatrixIndex { x: 2, y: 2 }], 1.0);
+        assert_eq!(test_m3x3[&MatrixIndex { x: 1, y: 2 }], 1.0);
+    }
+
+    #[test]
+    fn compare_3x3_matrices() {
+        let mut m1 = [[0.0; 3]; 3];
+        m1[0] = [1.0, 2.0, 3.0];
+        m1[1] = [5.5, 6.5, 7.5];
+        m1[2] = [9.0, 10.0, 11.0];
+
+        let mut m2 = [[0.0; 3]; 3];
+        m2[0] = [1.0, 2.0, 3.0];
+        m2[1] = [5.5, 6.5, 7.5];
+        m2[2] = [9.0, 10.0, 11.0];
+        assert_eq!(new_3x3(m1), new_3x3(m2));
+
+        let mut m3 = [[0.0; 3]; 3];
+        m3[0] = [1.0, 2.0, 3.0];
+        m3[1] = [5.5, 6.5, 7.5];
+        m3[2] = [9.0, 10.0, 11.0];
+
+        let mut m4 = [[0.0; 3]; 3];
+        m4[0] = [2.0, 3.0, 3.0];
+        m4[1] = [5.5, 6.5, 7.5];
+        m4[2] = [9.0, 10.0, 11.0];
+        m4[3] = [13.5, 14.5, 15.5];
+        assert_ne!(new_3x3(m3), new_3x3(m4));
     }
 
     #[test]

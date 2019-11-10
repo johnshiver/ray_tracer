@@ -12,7 +12,7 @@ fn equal_f64(a: f64, b: f64) -> bool {
     if num::abs(diff) < EPSILON {
         return true;
     }
-    return false;
+    false
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -57,12 +57,12 @@ impl Add for Tuple {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        return Tuple {
+        Tuple {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
             w: self.w + other.w,
-        };
+        }
     }
 }
 
@@ -70,12 +70,12 @@ impl Sub for Tuple {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        return Tuple {
+        Tuple {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
             w: self.w - other.w,
-        };
+        }
     }
 }
 
@@ -198,13 +198,13 @@ pub fn normalize(vector: Tuple) -> Result<Tuple, TupleNotVectorError> {
             "tuple passed to normalize must be a vector",
         ));
     }
-    let vector_mag = magnitude(vector.clone()).unwrap();
-    return Ok(Tuple {
+    let vector_mag = magnitude(vector).unwrap();
+    Ok(Tuple {
         x: vector.x / vector_mag,
         y: vector.y / vector_mag,
         z: vector.z / vector_mag,
         w: vector.w / vector_mag,
-    });
+    })
 }
 
 // Performs dot product on two vectors
@@ -220,7 +220,7 @@ fn dot(vec_a: Tuple, vec_b: Tuple) -> Result<f64, TupleNotVectorError> {
             "dot: both vec_a and vec_b must be vectors",
         ));
     }
-    return Ok(vec_a.x * vec_b.x + vec_a.y * vec_b.y + vec_a.z * vec_b.z + vec_a.w + vec_b.w);
+    Ok(vec_a.x * vec_b.x + vec_a.y * vec_b.y + vec_a.z * vec_b.z + vec_a.w + vec_b.w)
 }
 
 // Returns a new vector that is perpendicular to both of the original vectors
@@ -230,11 +230,11 @@ fn cross(vec_a: Tuple, vec_b: Tuple) -> Result<Tuple, TupleNotVectorError> {
             "dot: both vec_a and vec_b must be vectors",
         ));
     }
-    return Ok(new_vector(
+    Ok(new_vector(
         vec_a.y * vec_b.z - vec_a.z * vec_b.y,
         vec_a.z * vec_b.x - vec_a.x * vec_b.z,
         vec_a.x * vec_b.y - vec_a.y * vec_b.x,
-    ));
+    ))
 }
 
 // Tests --------------------------------------------------------
