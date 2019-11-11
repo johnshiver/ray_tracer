@@ -4,6 +4,17 @@ use std::ops::{Index, Mul};
 
 const EPSILON: f64 = 0.00001;
 
+const IDENTITY_MATRIX: [[f64; 4]; 4] = [
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0],
+];
+
+const IDENTITY_MATRIX_4x4: M4x4 = M4x4 {
+    matrix: IDENTITY_MATRIX,
+};
+
 fn equal_f64(a: f64, b: f64) -> bool {
     let diff = a - b;
     if num::abs(diff) < EPSILON {
@@ -18,7 +29,7 @@ struct MatrixIndex {
 }
 
 // ----------------------------- 4x4 ------------------------------------
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct M4x4 {
     matrix: [[f64; 4]; 4],
 }
@@ -177,7 +188,7 @@ pub fn new_2x2(matrix: [[f64; 2]; 2]) -> M2x2 {
 
 #[cfg(test)]
 mod tests {
-    use crate::matrix::{new_2x2, new_3x3, new_4x4, MatrixIndex};
+    use crate::matrix::{new_2x2, new_3x3, new_4x4, IDENTITY_MATRIX_4x4, MatrixIndex};
     use crate::tuple::{new_point, Tuple};
 
     #[test]
@@ -316,5 +327,28 @@ mod tests {
         let m3 = [[1.0, 2.0], [5.5, 6.5]];
         let m4 = [[2.0, 3.0], [5.5, 6.5]];
         assert_ne!(new_2x2(m3), new_2x2(m4));
+    }
+
+    #[test]
+    fn identity_matrix_multi_matrix() {
+        let m1 = [
+            [0.0, 1.0, 2.0, 4.0],
+            [1.0, 2.0, 4.0, 8.0],
+            [2.0, 4.0, 8.0, 16.0],
+            [4.0, 8.0, 16.0, 32.0],
+        ];
+        let expected = new_4x4(m1);
+        assert_eq!(expected * IDENTITY_MATRIX_4x4, expected)
+    }
+
+    #[test]
+    fn identity_matrix_multi_tuple() {
+        let expected = Tuple {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            w: 4.0,
+        };
+        assert_eq!(IDENTITY_MATRIX_4x4 * expected, expected)
     }
 }
