@@ -1,3 +1,4 @@
+use crate::tuple::{new_point, Tuple};
 use std::borrow::Borrow;
 use std::ops::{Index, Mul};
 
@@ -49,11 +50,11 @@ impl PartialEq for M4x4 {
     }
 }
 
-impl Mul<M4x4> for M4x4{
+impl Mul<M4x4> for M4x4 {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        let mut new_matrix= [[0.0; 4]; 4];
+        let mut new_matrix = [[0.0; 4]; 4];
         for y in 0..4 {
             for x in 0..4 {
                 new_matrix[y][x] = cal_index_matrix_multi(self.matrix, other.matrix, x, y);
@@ -63,19 +64,37 @@ impl Mul<M4x4> for M4x4{
     }
 }
 
-fn cal_index_matrix_multi(m1: [[f64; 4];4], m2: [[f64; 4]; 4], x: usize, y: usize) -> f64 {
+impl Mul<Tuple> for M4x4 {
+    type Output = Tuple;
+
+    fn mul(self, other: Tuple) -> Tuple {
+        Tuple {
+            x: cal_index_tuple_multi(self.matrix, other, 0),
+            y: cal_index_tuple_multi(self.matrix, other, 1),
+            z: cal_index_tuple_multi(self.matrix, other, 2),
+            w: cal_index_tuple_multi(self.matrix, other, 3),
+        }
+    }
+}
+
+fn cal_index_matrix_multi(m1: [[f64; 4]; 4], m2: [[f64; 4]; 4], x: usize, y: usize) -> f64 {
     // for y 1, x 0 of new matrix
     // line up row 1 for m1 and col 1 for m2
     let row = m1[y];
-    let col = [
-        m2[0][x], m2[1][x], m2[2][x], m2[3][x],
-    ];
+    let col = [m2[0][x], m2[1][x], m2[2][x], m2[3][x]];
 
     let mut final_val = 0.0;
     for i in 0..4 {
         final_val += row[i] * col[i]
     }
     final_val
+}
+
+fn cal_index_tuple_multi(m1: [[f64; 4]; 4], t: Tuple, r: usize) -> f64 {
+    // for y 1, x 0 of new matrix
+    // line up row 1 for m1 and col 1 for m2
+    let row = m1[r];
+    t.x * row[0] + t.y * row[1] + t.z * row[2] + t.w * row[3]
 }
 
 pub fn new_4x4(matrix: [[f64; 4]; 4]) -> M4x4 {
@@ -138,7 +157,7 @@ impl Index<&MatrixIndex> for M2x2 {
 
 impl Eq for M2x2 {}
 
-impl PartialEq for M2x2{
+impl PartialEq for M2x2 {
     fn eq(&self, other: &Self) -> bool {
         for y in 0..1 {
             for x in 0..1 {
@@ -159,10 +178,11 @@ pub fn new_2x2(matrix: [[f64; 2]; 2]) -> M2x2 {
 #[cfg(test)]
 mod tests {
     use crate::matrix::{new_2x2, new_3x3, new_4x4, MatrixIndex};
+    use crate::tuple::{new_point, Tuple};
 
     #[test]
     fn create_4x4_matrix() {
-        let mut test_matrix = [
+        let test_matrix = [
             [1.0, 2.0, 3.0, 4.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
@@ -238,12 +258,28 @@ mod tests {
     }
 
     #[test]
-    fn create_3x3_matrix() {
-        let mut test_matrix = [
-            [-3.0, 5.0, 0.0],
-            [1.0, -2.0, -7.0],
-            [0.0, 1.0, 1.0],
+    fn multiply_4x4_matrix_tuple() {
+        let m1 = [
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 4.0, 4.0, 2.0],
+            [8.0, 6.0, 4.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
         ];
+        let t1 = new_point(1.0, 2.0, 3.0);
+        let expected = Tuple {
+            x: 18.0,
+            y: 24.0,
+            z: 33.0,
+            w: 1.0,
+        };
+
+        let test_m1 = new_4x4(m1);
+        assert_eq!(test_m1 * t1, expected);
+    }
+
+    #[test]
+    fn create_3x3_matrix() {
+        let test_matrix = [[-3.0, 5.0, 0.0], [1.0, -2.0, -7.0], [0.0, 1.0, 1.0]];
         let test_m3x3 = new_3x3(test_matrix);
         assert_eq!(test_m3x3[&MatrixIndex { x: 0, y: 0 }], -3.0);
         assert_eq!(test_m3x3[&MatrixIndex { x: 1, y: 1 }], -2.0);
@@ -253,37 +289,18 @@ mod tests {
 
     #[test]
     fn compare_3x3_matrices() {
-        let mut m1 = [
-            [1.0, 2.0, 3.0],
-            [5.5, 6.5, 7.5],
-            [9.0, 10.0, 11.0],
-        ];
-        let mut m2 = [
-            [1.0, 2.0, 3.0],
-            [5.5, 6.5, 7.5],
-            [9.0, 10.0, 11.0],
-        ];
+        let m1 = [[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]];
+        let m2 = [[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]];
         assert_eq!(new_3x3(m1), new_3x3(m2));
 
-        let mut m3 = [
-            [1.0, 2.0, 3.0],
-            [5.5, 6.5, 7.5],
-            [9.0, 10.0, 11.0],
-        ];
-        let mut m4 = [
-            [2.0, 3.0, 3.0],
-            [5.5, 6.5, 7.5],
-            [9.0, 10.0, 11.0],
-        ];
+        let m3 = [[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]];
+        let m4 = [[2.0, 3.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]];
         assert_ne!(new_3x3(m3), new_3x3(m4));
     }
 
     #[test]
     fn create_2x2_matrix() {
-        let mut test_matrix = [
-            [-3.0, 5.0],
-            [1.0, -2.0],
-        ];
+        let mut test_matrix = [[-3.0, 5.0], [1.0, -2.0]];
         let test_m2x2 = new_2x2(test_matrix);
         assert_eq!(test_m2x2[&MatrixIndex { x: 0, y: 0 }], -3.0);
         assert_eq!(test_m2x2[&MatrixIndex { x: 1, y: 0 }], 5.0);
@@ -292,24 +309,12 @@ mod tests {
     }
     #[test]
     fn compare_2x2_matrices() {
-        let m1 = [
-            [1.0, 2.0],
-            [5.5, 6.5],
-        ];
-        let m2 = [
-            [1.0, 2.0],
-            [5.5, 6.5],
-        ];
+        let m1 = [[1.0, 2.0], [5.5, 6.5]];
+        let m2 = [[1.0, 2.0], [5.5, 6.5]];
         assert_eq!(new_2x2(m1), new_2x2(m2));
 
-        let m3 = [
-            [1.0, 2.0],
-            [5.5, 6.5],
-        ];
-        let mut m4 = [
-            [2.0, 3.0],
-            [5.5, 6.5],
-        ];
+        let m3 = [[1.0, 2.0], [5.5, 6.5]];
+        let m4 = [[2.0, 3.0], [5.5, 6.5]];
         assert_ne!(new_2x2(m3), new_2x2(m4));
     }
 }
