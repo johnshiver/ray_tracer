@@ -111,6 +111,16 @@ fn cal_index_tuple_multi(m1: [[f64; 4]; 4], t: Tuple, r: usize) -> f64 {
 pub fn new_4x4(matrix: [[f64; 4]; 4]) -> M4x4 {
     M4x4 { matrix }
 }
+
+pub fn transpose(m: M4x4) -> M4x4 {
+    let mut tx_m = [[0.0; 4]; 4];
+    for y in 0..4 {
+        for x in 0..4 {
+            tx_m[x][y] = m.matrix[y][x];
+        }
+    }
+    new_4x4(tx_m)
+}
 // ----------------------------- 3x3 ------------------------------------
 
 #[derive(Debug)]
@@ -188,7 +198,7 @@ pub fn new_2x2(matrix: [[f64; 2]; 2]) -> M2x2 {
 
 #[cfg(test)]
 mod tests {
-    use crate::matrix::{new_2x2, new_3x3, new_4x4, IDENTITY_MATRIX_4x4, MatrixIndex};
+    use crate::matrix::{new_2x2, new_3x3, new_4x4, transpose, IDENTITY_MATRIX_4x4, MatrixIndex};
     use crate::tuple::{new_point, Tuple};
 
     #[test]
@@ -286,6 +296,28 @@ mod tests {
 
         let test_m1 = new_4x4(m1);
         assert_eq!(test_m1 * t1, expected);
+    }
+
+    #[test]
+    fn transpose_4x4_matrix() {
+        let m1 = [
+            [0.0, 9.0, 3.0, 0.0],
+            [9.0, 8.0, 0.0, 8.0],
+            [1.0, 8.0, 5.0, 3.0],
+            [0.0, 0.0, 5.0, 8.0],
+        ];
+        let expected = [
+            [0.0, 9.0, 1.0, 0.0],
+            [9.0, 8.0, 8.0, 0.0],
+            [3.0, 0.0, 5.0, 5.0],
+            [0.0, 8.0, 3.0, 8.0],
+        ];
+
+        let test_m1 = new_4x4(m1);
+        let test_expected = new_4x4(expected);
+        assert_eq!(transpose(test_m1), test_expected);
+
+        assert_eq!(transpose(IDENTITY_MATRIX_4x4), IDENTITY_MATRIX_4x4);
     }
 
     #[test]
