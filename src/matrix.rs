@@ -121,6 +121,48 @@ pub fn transpose(m: M4x4) -> M4x4 {
     }
     new_4x4(tx_m)
 }
+
+pub fn submatrix_4x4(matrix: &M4x4, row: usize, col: usize) -> M3x3 {
+    let mut new_m = [[0.0; 3]; 3];
+    let mut write_x = 0;
+    let mut write_y = 0;
+    for y in 0..4 {
+        if y == row {
+            continue
+        }
+        for x in 0..4 {
+            if x == col {
+                continue
+            }
+            let val = matrix.matrix[y][x];
+            new_m[write_y][write_x] = val;
+            write_x += 1;
+        }
+        write_x = 0;
+        write_y += 1;
+    }
+    new_3x3(new_m)
+}
+
+pub fn minor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
+    determinant_3x3(submatrix_4x4(matrix, row, col).borrow())
+}
+
+pub fn cofactor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
+    let cofactor = minor_4x4(matrix, row, col);
+    if (row + col) % 2 == 0 {
+        return cofactor
+    }
+    -1.0 * cofactor
+}
+
+pub fn determinant_4x4(matrix: &M4x4) -> f64 {
+    let mut det = 0.0;
+    for col in 0..4 {
+        det += matrix.matrix[0][col] * cofactor_4x4(matrix, 0, col)
+    }
+    det
+}
 // ----------------------------- 3x3 ------------------------------------
 
 #[derive(Debug)]
@@ -157,6 +199,48 @@ impl PartialEq for M3x3 {
 
 pub fn new_3x3(matrix: [[f64; 3]; 3]) -> M3x3 {
     M3x3 { matrix }
+}
+
+pub fn submatrix_3x3(matrix: &M3x3, row: usize, col: usize) -> M2x2 {
+    let mut new_m = [[0.0; 2]; 2];
+    let mut write_x = 0;
+    let mut write_y = 0;
+    for y in 0..3 {
+        if y == row {
+            continue
+        }
+        for x in 0..3 {
+            if x == col {
+                continue
+            }
+            let val = matrix.matrix[y][x];
+            new_m[write_y][write_x] = val;
+            write_x += 1;
+        }
+        write_x = 0;
+        write_y += 1;
+    }
+    new_2x2(new_m)
+}
+
+pub fn minor_3x3(matrix: &M3x3, row: usize, col: usize) -> f64 {
+    determinant_2x2(submatrix_3x3(matrix, row, col))
+}
+
+pub fn cofactor_3x3(matrix: &M3x3, row: usize, col: usize) -> f64 {
+    let cofactor = minor_3x3(matrix, row, col);
+    if (row + col) % 2 == 0 {
+        return cofactor
+    }
+    -1.0 * cofactor
+}
+
+pub fn determinant_3x3(matrix: &M3x3) -> f64 {
+    let mut det = 0.0;
+    for col in 0..3 {
+        det += matrix.matrix[0][col] * cofactor_3x3(matrix, 0, col)
+    }
+    det
 }
 
 // ----------------------------- 2x2 ------------------------------------
@@ -196,10 +280,16 @@ pub fn new_2x2(matrix: [[f64; 2]; 2]) -> M2x2 {
     M2x2 { matrix }
 }
 
+pub fn determinant_2x2(m: M2x2) -> f64 {
+   (m.matrix[0][0] * m.matrix[1][1]) - (m.matrix[0][1] * m.matrix[1][0])
+}
+
+
 #[cfg(test)]
 mod tests {
-    use crate::matrix::{new_2x2, new_3x3, new_4x4, transpose, IDENTITY_MATRIX_4x4, MatrixIndex};
+    use crate::matrix::{new_2x2, new_3x3, new_4x4, transpose, IDENTITY_MATRIX_4x4, MatrixIndex, determinant_2x2, submatrix_3x3, submatrix_4x4, minor_3x3, cofactor_3x3, determinant_3x3, determinant_4x4};
     use crate::tuple::{new_point, Tuple};
+    use std::borrow::Borrow;
 
     #[test]
     fn create_4x4_matrix() {
@@ -350,6 +440,7 @@ mod tests {
         assert_eq!(test_m2x2[&MatrixIndex { x: 0, y: 1 }], 1.0);
         assert_eq!(test_m2x2[&MatrixIndex { x: 1, y: 1 }], -2.0);
     }
+
     #[test]
     fn compare_2x2_matrices() {
         let m1 = [[1.0, 2.0], [5.5, 6.5]];
@@ -359,6 +450,12 @@ mod tests {
         let m3 = [[1.0, 2.0], [5.5, 6.5]];
         let m4 = [[2.0, 3.0], [5.5, 6.5]];
         assert_ne!(new_2x2(m3), new_2x2(m4));
+    }
+
+    #[test]
+    fn determinant_2x2_matrices() {
+        let m1 = [[1.0, 5.0], [-3.0, 2.0]];
+        assert_eq!(determinant_2x2(new_2x2(m1)), 17.0);
     }
 
     #[test]
@@ -382,5 +479,77 @@ mod tests {
             w: 4.0,
         };
         assert_eq!(IDENTITY_MATRIX_4x4 * expected, expected)
+    }
+
+    #[test]
+    fn submatrix_3x3_2x2() {
+        let test_m3 = new_3x3([
+            [1.0, 5.0, 0.0],
+            [-3.0, 2.0, 7.0],
+            [0.0, 6.0, -3.0],
+        ]);
+        let expected = new_2x2([
+            [-3.0, 2.0],
+            [0.0, 6.0],
+        ]);
+        assert_eq!(submatrix_3x3(test_m3.borrow(), 0, 2), expected);
+    }
+
+    #[test]
+    fn submatrix_4x4_3x3() {
+        let test_m3 = new_4x4([
+            [-6.0, 1.0, 1.0, 6.0],
+            [-8.0, 5.0, 8.0, 6.0],
+            [-1.0, 0.0, 8.0, 2.0],
+            [-7.0, 1.0, -1.0, 1.0],
+        ]);
+        let expected = new_3x3([
+            [-6.0, 1.0, 6.0],
+            [-8.0, 8.0, 6.0],
+            [-7.0, -1.0, 1.0],
+        ]);
+        assert_eq!(submatrix_4x4(test_m3.borrow(), 2, 1), expected);
+    }
+
+    #[test]
+    fn minor_3x3_test() {
+        let a = new_3x3([
+            [3.0, 5.0, 0.0],
+            [2.0, -1.0, -7.0],
+            [6.0, -1.0, 5.0],
+        ]);
+        assert_eq!(minor_3x3(a.borrow(), 1, 0), 25.0);
+    }
+
+    #[test]
+    fn cofactor_3x3_test() {
+        let a = new_3x3([
+            [3.0, 5.0, 0.0],
+            [2.0, -1.0, -7.0],
+            [6.0, -1.0, 5.0],
+        ]);
+        assert_eq!(cofactor_3x3(a.borrow(), 0, 0), -12.0);
+        assert_eq!(cofactor_3x3(a.borrow(), 1, 0), -25.0);
+    }
+
+    #[test]
+    fn determinant_3x3_test() {
+        let a = new_3x3([
+            [1.0, 2.0, 6.0],
+            [-5.0, 8.0, -4.0],
+            [2.0, 6.0, 4.0],
+        ]);
+        assert_eq!(determinant_3x3(a.borrow()), -196.0);
+    }
+
+    #[test]
+    fn determinant_4x4_test() {
+        let a = new_4x4([
+            [-2.0, -8.0, 3.0, 5.0],
+            [-3.0, 1.0, 7.0, 3.0],
+            [1.0, 2.0, -9.0, 6.0],
+            [-6.0, 7.0, 7.0, -9.0],
+        ]);
+        assert_eq!(determinant_4x4(a.borrow()), -4071.0);
     }
 }
