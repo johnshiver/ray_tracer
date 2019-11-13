@@ -1,6 +1,8 @@
-use crate::tuple::{new_point, Tuple};
+use crate::tuple::{new_point, Tuple, TupleNotVectorError};
 use std::borrow::Borrow;
 use std::ops::{Index, Mul};
+use std::fmt;
+use std::error::Error;
 
 const EPSILON: f64 = 0.00001;
 
@@ -163,6 +165,61 @@ pub fn determinant_4x4(matrix: &M4x4) -> f64 {
     }
     det
 }
+
+pub fn invertible_4x4(matrix: &M4x4) -> bool {
+    if determinant_4x4(matrix.borrow()) == 0.0 {
+        return false
+    }
+    true
+}
+
+// Errors --------------------------------------------------
+#[derive(Debug)]
+pub struct MatrixNotInvertibleError {
+    details: String,
+}
+
+impl MatrixNotInvertibleError {
+    fn new(msg: &str) -> MatrixNotInvertibleError {
+        MatrixNotInvertibleError {
+            details: msg.to_string(),
+        }
+    }
+}
+
+impl fmt::Display for MatrixNotInvertibleError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for MatrixNotInvertibleError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+impl PartialEq for MatrixNotInvertibleError {
+    fn eq(&self, other: &Self) -> bool {
+        self.details == other.details
+    }
+}
+
+pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixNotInvertibleError> {
+    if !invertible_4x4(matrix.borrow()) {
+        return Err(MatrixNotInvertibleError::new("invert_4x4: matrix not invertible"));
+    }
+    let mut cofactors = [[0.0; 4]; 4];
+    let det = determinant_4x4(matrix.borrow());
+    for y in 0..4 {
+        for x in 0..4 {
+            let mut c = cofactor_4x4(matrix.borrow(), y, x);
+            // sneaky tricky to accomplish transpose operation
+            cofactors[x][y] = c / det;
+        }
+    }
+    Ok(new_4x4(cofactors))
+}
 // ----------------------------- 3x3 ------------------------------------
 
 #[derive(Debug)]
@@ -287,7 +344,7 @@ pub fn determinant_2x2(m: M2x2) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::matrix::{new_2x2, new_3x3, new_4x4, transpose, IDENTITY_MATRIX_4x4, MatrixIndex, determinant_2x2, submatrix_3x3, submatrix_4x4, minor_3x3, cofactor_3x3, determinant_3x3, determinant_4x4};
+    use crate::matrix::{new_2x2, new_3x3, new_4x4, transpose, IDENTITY_MATRIX_4x4, MatrixIndex, determinant_2x2, submatrix_3x3, submatrix_4x4, minor_3x3, cofactor_3x3, determinant_3x3, determinant_4x4, invertible_4x4, cofactor_4x4, invert_4x4};
     use crate::tuple::{new_point, Tuple};
     use std::borrow::Borrow;
 
@@ -551,5 +608,101 @@ mod tests {
             [-6.0, 7.0, 7.0, -9.0],
         ]);
         assert_eq!(determinant_4x4(a.borrow()), -4071.0);
+    }
+
+    #[test]
+    fn matrix_invertibility() {
+        let a = new_4x4([
+            [6.0, 4.0, 4.0, 4.0],
+            [5.0, 5.0, 7.0, 6.0],
+            [4.0, -9.0, 3.0, -7.0],
+            [9.0, 1.0, 7.0, -6.0],
+        ]);
+        assert_eq!(determinant_4x4(a.borrow()), -2120.0);
+        assert_eq!(invertible_4x4(a.borrow()), true);
+
+        let a = new_4x4([
+            [-4.0, 2.0, -2.0, -3.0],
+            [9.0, 6.0, 2.0, 6.0],
+            [0.0, -5.0, 1.0, -5.0],
+            [0.0, 0.0, 0.0, 0.0],
+        ]);
+        assert_eq!(determinant_4x4(a.borrow()), 0.0);
+        assert_eq!(invertible_4x4(a.borrow()), false);
+    }
+
+    #[test]
+    fn matrix_inverse() {
+        let a = new_4x4([
+            [-5.0, 2.0, 6.0, -8.0],
+            [1.0, -5.0, 1.0, 8.0],
+            [7.0, 7.0, -6.0, -7.0],
+            [1.0, -3.0, 7.0, 4.0],
+        ]);
+        assert_eq!(determinant_4x4(a.borrow()), 532.0);
+        assert_eq!(cofactor_4x4(a.borrow(), 2, 3), -160.0);
+        assert_eq!(cofactor_4x4(a.borrow(), 3, 2), 105.0);
+
+        let b = invert_4x4(a.borrow()).unwrap();
+        let expected = new_4x4([
+            [0.21805, 0.45113, 0.24060, -0.04511],
+            [-0.80827, -1.45677, -0.44361, 0.52068],
+            [-0.07895, -0.22368, -0.05263, 0.19737],
+            [-0.52256, -0.81391, -0.30075, 0.30639],
+        ]);
+        assert_eq!(b, expected);
+
+        let c = new_4x4([
+            [8.0, -5.0, 9.0, 2.0],
+            [7.0, 5.0, 6.0, 1.0],
+            [-6.0, 0.0, 9.0, 6.0],
+            [-3.0, 0.0, -9.0, -4.0],
+        ]);
+        let d = invert_4x4(c.borrow()).unwrap();
+        let e2 = new_4x4([
+            [-0.15385, -0.15385, -0.28205, -0.53846],
+            [-0.07692, 0.12308, 0.02564, 0.03077],
+            [0.35897, 0.35897, 0.43590, 0.92308],
+            [-0.69231, -0.69231, -0.76923, -1.92308],
+        ]);
+        assert_eq!(d, e2);
+
+        let e = new_4x4([
+            [9.0, 3.0, 0.0, 9.0],
+            [-5.0, -2.0, -6.0, -3.0],
+            [-4.0, 9.0, 6.0, 4.0],
+            [-7.0, 6.0, 6.0, 2.0],
+        ]);
+        let f = invert_4x4(e.borrow()).unwrap();
+        let e3 = new_4x4([
+            [-0.04074, -0.07778, 0.14444, -0.22222],
+            [-0.07778, 0.03333, 0.36667, -0.33333],
+            [-0.02901, -0.14630, -0.10926, 0.12963],
+            [0.17778, 0.06663, -0.26667, 0.333333333333333],
+        ]);
+        assert_eq!(f, e3);
+    }
+
+    #[test]
+    fn matrix_product_by_its_inverse() {
+        let a = new_4x4([
+            [3.0, -9.0, 7.0, 3.0],
+            [3.0, -8.0, 2.0, -9.0],
+            [-4.0, 4.0, 4.0, 1.0],
+            [-6.0, 5.0, -1.0, 1.0],
+        ]);
+
+        let b = new_4x4([
+            [8.0, 2.0, 2.0, 2.0],
+            [3.0, -1.0, 7.0, 0.0],
+            [7.0, 0.0, 5.0, 4.0],
+            [6.0, -2.0, 0.0, 5.0],
+        ]);
+
+        let c = a * b;
+        assert_eq!(a, c * invert_4x4(b.borrow()).unwrap());
+
+
+
     }
 }
