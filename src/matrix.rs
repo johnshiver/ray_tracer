@@ -5,16 +5,13 @@ use std::fmt;
 use std::error::Error;
 
 const EPSILON: f64 = 0.00001;
-
-const IDENTITY_MATRIX: [[f64; 4]; 4] = [
-    [1.0, 0.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0, 0.0],
-    [0.0, 0.0, 1.0, 0.0],
-    [0.0, 0.0, 0.0, 1.0],
-];
-
-const IDENTITY_MATRIX_4x4: M4x4 = M4x4 {
-    matrix: IDENTITY_MATRIX,
+const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
+    matrix: [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
 };
 
 fn equal_f64(a: f64, b: f64) -> bool {
@@ -344,7 +341,7 @@ pub fn determinant_2x2(m: M2x2) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::matrix::{new_2x2, new_3x3, new_4x4, transpose, IDENTITY_MATRIX_4x4, MatrixIndex, determinant_2x2, submatrix_3x3, submatrix_4x4, minor_3x3, cofactor_3x3, determinant_3x3, determinant_4x4, invertible_4x4, cofactor_4x4, invert_4x4};
+    use crate::matrix::{new_2x2, new_3x3, new_4x4, transpose, IDENTITY_MATRIX_4X4, MatrixIndex, determinant_2x2, submatrix_3x3, submatrix_4x4, minor_3x3, cofactor_3x3, determinant_3x3, determinant_4x4, invertible_4x4, cofactor_4x4, invert_4x4};
     use crate::tuple::{new_point, Tuple};
     use std::borrow::Borrow;
 
@@ -464,7 +461,7 @@ mod tests {
         let test_expected = new_4x4(expected);
         assert_eq!(transpose(test_m1), test_expected);
 
-        assert_eq!(transpose(IDENTITY_MATRIX_4x4), IDENTITY_MATRIX_4x4);
+        assert_eq!(transpose(IDENTITY_MATRIX_4X4), IDENTITY_MATRIX_4X4);
     }
 
     #[test]
@@ -524,7 +521,7 @@ mod tests {
             [4.0, 8.0, 16.0, 32.0],
         ];
         let expected = new_4x4(m1);
-        assert_eq!(expected * IDENTITY_MATRIX_4x4, expected)
+        assert_eq!(expected * IDENTITY_MATRIX_4X4, expected)
     }
 
     #[test]
@@ -535,7 +532,7 @@ mod tests {
             z: 3.0,
             w: 4.0,
         };
-        assert_eq!(IDENTITY_MATRIX_4x4 * expected, expected)
+        assert_eq!(IDENTITY_MATRIX_4X4 * expected, expected)
     }
 
     #[test]
@@ -698,11 +695,7 @@ mod tests {
             [7.0, 0.0, 5.0, 4.0],
             [6.0, -2.0, 0.0, 5.0],
         ]);
-
         let c = a * b;
         assert_eq!(a, c * invert_4x4(b.borrow()).unwrap());
-
-
-
     }
 }
