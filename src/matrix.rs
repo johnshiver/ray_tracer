@@ -5,7 +5,7 @@ use std::fmt;
 use std::error::Error;
 
 const EPSILON: f64 = 0.00001;
-const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
+pub const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
     matrix: [
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
@@ -30,7 +30,7 @@ struct MatrixIndex {
 // ----------------------------- 4x4 ------------------------------------
 #[derive(Debug, Copy, Clone)]
 pub struct M4x4 {
-    matrix: [[f64; 4]; 4],
+    pub matrix: [[f64; 4]; 4],
 }
 
 impl Index<&MatrixIndex> for M4x4 {

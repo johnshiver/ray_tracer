@@ -8,6 +8,7 @@ mod canvas;
 mod color;
 mod environment;
 mod matrix;
+mod matrix_transformations;
 mod projectile;
 mod tuple;
 
