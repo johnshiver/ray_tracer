@@ -131,10 +131,10 @@ impl Tuple {
 }
 
 impl Tuple {
-    pub fn is_unit_vector(&self) -> Result<bool, TupleNotVectorError> {
+    pub fn is_unit_vector(&self) -> Result<bool, TupleTypeError> {
         let is_vec_res = self.is_vector();
         if !is_vec_res {
-            return Err(TupleNotVectorError::new(
+            return Err(TupleTypeError::new(
                 "is_unit_vector: tuple is not a vector",
             ));
         }
@@ -149,31 +149,31 @@ impl Tuple {
 
 // Errors --------------------------------------------------
 #[derive(Debug)]
-pub struct TupleNotVectorError {
+pub struct TupleTypeError {
     details: String,
 }
 
-impl TupleNotVectorError {
-    fn new(msg: &str) -> TupleNotVectorError {
-        TupleNotVectorError {
+impl TupleTypeError {
+    pub fn new(msg: &str) -> TupleTypeError {
+        TupleTypeError {
             details: msg.to_string(),
         }
     }
 }
 
-impl fmt::Display for TupleNotVectorError {
+impl fmt::Display for TupleTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.details)
     }
 }
 
-impl Error for TupleNotVectorError {
+impl Error for TupleTypeError {
     fn description(&self) -> &str {
         &self.details
     }
 }
 
-impl PartialEq for TupleNotVectorError {
+impl PartialEq for TupleTypeError {
     fn eq(&self, other: &Self) -> bool {
         self.details == other.details
     }
@@ -181,9 +181,9 @@ impl PartialEq for TupleNotVectorError {
 
 // Functions ------------------------------------------------------------------------
 
-pub fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
+pub fn magnitude(vector: Tuple) -> Result<f64, TupleTypeError> {
     if !vector.is_vector() {
-        return Err(TupleNotVectorError::new(
+        return Err(TupleTypeError::new(
             "tuple passed to magnitude must be a vector",
         ));
     }
@@ -192,9 +192,9 @@ pub fn magnitude(vector: Tuple) -> Result<f64, TupleNotVectorError> {
     Ok(magnitude)
 }
 
-pub fn normalize(vector: Tuple) -> Result<Tuple, TupleNotVectorError> {
+pub fn normalize(vector: Tuple) -> Result<Tuple, TupleTypeError> {
     if !vector.is_vector() {
-        return Err(TupleNotVectorError::new(
+        return Err(TupleTypeError::new(
             "tuple passed to normalize must be a vector",
         ));
     }
@@ -214,9 +214,9 @@ pub fn normalize(vector: Tuple) -> Result<Tuple, TupleNotVectorError> {
 // means they point in opposite directions.
 //
 // If the vectors are unit vectors, the dot product is actually the cosine of the angles between them
-fn dot(vec_a: Tuple, vec_b: Tuple) -> Result<f64, TupleNotVectorError> {
+pub fn dot(vec_a: Tuple, vec_b: Tuple) -> Result<f64, TupleTypeError> {
     if !(vec_a.is_vector() && vec_b.is_vector()) {
-        return Err(TupleNotVectorError::new(
+        return Err(TupleTypeError::new(
             "dot: both vec_a and vec_b must be vectors",
         ));
     }
@@ -224,9 +224,9 @@ fn dot(vec_a: Tuple, vec_b: Tuple) -> Result<f64, TupleNotVectorError> {
 }
 
 // Returns a new vector that is perpendicular to both of the original vectors
-fn cross(vec_a: Tuple, vec_b: Tuple) -> Result<Tuple, TupleNotVectorError> {
+fn cross(vec_a: Tuple, vec_b: Tuple) -> Result<Tuple, TupleTypeError> {
     if !(vec_a.is_vector() && vec_b.is_vector()) {
-        return Err(TupleNotVectorError::new(
+        return Err(TupleTypeError::new(
             "dot: both vec_a and vec_b must be vectors",
         ));
     }
@@ -242,7 +242,7 @@ fn cross(vec_a: Tuple, vec_b: Tuple) -> Result<Tuple, TupleNotVectorError> {
 #[cfg(test)]
 mod tests {
     use crate::tuple::{
-        cross, dot, magnitude, new_point, new_vector, normalize, Tuple, TupleNotVectorError,
+        cross, dot, magnitude, new_point, new_vector, normalize, Tuple, TupleTypeError,
     };
 
     #[test]
@@ -450,7 +450,7 @@ mod tests {
     #[test]
     fn magnitude_error() {
         let e = new_point(-1.0, -2.0, -3.0);
-        let expected = TupleNotVectorError::new("tuple passed to magnitude must be a vector");
+        let expected = TupleTypeError::new("tuple passed to magnitude must be a vector");
         let res = magnitude(e);
         match res {
             Ok(m) => assert!(false, "this should have been an error"),
@@ -517,7 +517,7 @@ mod tests {
     #[test]
     fn normalize_failure() {
         let e = new_point(-1.0, -2.0, -3.0);
-        let expected = TupleNotVectorError::new("tuple passed to normalize must be a vector");
+        let expected = TupleTypeError::new("tuple passed to normalize must be a vector");
         let res = normalize(e);
         match res {
             Ok(m) => assert!(false, "this should have been an error"),

@@ -13,6 +13,7 @@ mod matrix;
 mod matrix_transformations;
 mod projectile;
 mod tuple;
+mod rays;
 
 fn main() {
     analog_clock();

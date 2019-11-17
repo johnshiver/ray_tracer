@@ -1,4 +1,4 @@
-use crate::tuple::{new_point, Tuple, TupleNotVectorError};
+use crate::tuple::{Tuple};
 use std::borrow::Borrow;
 use std::ops::{Index, Mul};
 use std::fmt;
