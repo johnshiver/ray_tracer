@@ -23,7 +23,6 @@ fn rotation_x(radians: f64) -> M4x4 {
     base_matrix.matrix[1][2] = -radians.sin();
     base_matrix.matrix[2][1] = radians.sin();
     base_matrix.matrix[2][2] = radians.cos();
-
     new_4x4(base_matrix.matrix)
 }
 
@@ -33,7 +32,6 @@ fn rotation_y(radians: f64) -> M4x4 {
     base_matrix.matrix[0][2] = radians.sin();
     base_matrix.matrix[2][0] = -radians.sin();
     base_matrix.matrix[2][2] = radians.cos();
-
     new_4x4(base_matrix.matrix)
 }
 
@@ -43,6 +41,17 @@ fn rotation_z(radians: f64) -> M4x4 {
     base_matrix.matrix[0][1] = -radians.sin();
     base_matrix.matrix[1][0] = radians.sin();
     base_matrix.matrix[1][1] = radians.cos();
+    new_4x4(base_matrix.matrix)
+}
+
+fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
+    let mut base_matrix = IDENTITY_MATRIX_4X4.clone();
+    base_matrix.matrix[0][1] = xy;
+    base_matrix.matrix[0][2] = xx;
+    base_matrix.matrix[1][0] = yx;
+    base_matrix.matrix[1][2] = yz;
+    base_matrix.matrix[2][0] = zx;
+    base_matrix.matrix[2][1] = zy;
 
     new_4x4(base_matrix.matrix)
 }
@@ -50,7 +59,7 @@ fn rotation_z(radians: f64) -> M4x4 {
 
 #[cfg(test)]mod tests {
     use crate::tuple::{new_point, new_vector};
-    use crate::matrix_transformations::{translation, scaling, rotation_x, rotation_y, rotation_z};
+    use crate::matrix_transformations::{translation, scaling, rotation_x, rotation_y, rotation_z, shearing};
     use crate::matrix::invert_4x4;
     use std::borrow::Borrow;
     use std::f64::consts::PI;
@@ -156,6 +165,54 @@ fn rotation_z(radians: f64) -> M4x4 {
 
         assert_eq!(half_quarter * p, exp1);
         assert_eq!(full_quarter * p, exp2);
+    }
+
+    #[test]
+    fn shearing_tx_moves_x_proportional_y() {
+        let tx = shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let p = new_point(2.0, 3.0, 4.0);
+        let expected = new_point(5.0, 3.0, 4.0);
+        assert_eq!(tx * p, expected)
+    }
+
+    #[test]
+    fn shearing_tx_moves_x_proportional_z() {
+        let tx = shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let p = new_point(2.0, 3.0, 4.0);
+        let expected = new_point(6.0, 3.0, 4.0);
+        assert_eq!(tx * p, expected)
+    }
+
+    #[test]
+    fn shearing_tx_moves_y_proportional_x() {
+        let tx = shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let p = new_point(2.0, 3.0, 4.0);
+        let expected = new_point(2.0, 5.0, 4.0);
+        assert_eq!(tx * p, expected)
+    }
+
+    #[test]
+    fn shearing_tx_moves_y_proportional_z() {
+        let tx = shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let p = new_point(2.0, 3.0, 4.0);
+        let expected = new_point(2.0, 7.0, 4.0);
+        assert_eq!(tx * p, expected)
+    }
+
+    #[test]
+    fn shearing_tx_moves_z_proportional_x() {
+        let tx = shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let p = new_point(2.0, 3.0, 4.0);
+        let expected = new_point(2.0, 3.0, 6.0);
+        assert_eq!(tx * p, expected)
+    }
+
+    #[test]
+    fn shearing_tx_moves_z_proportional_y() {
+        let tx = shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let p = new_point(2.0, 3.0, 4.0);
+        let expected = new_point(2.0, 3.0, 7.0);
+        assert_eq!(tx * p, expected)
     }
 
 }
