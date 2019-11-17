@@ -1,7 +1,7 @@
 use crate::matrix::{M4x4, new_4x4, IDENTITY_MATRIX_4X4};
 
 // moves a point
-fn translation(x: f64, y: f64, z: f64) -> M4x4 {
+pub fn translation(x: f64, y: f64, z: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4.clone();
     base_matrix.matrix[0][3] = x;
     base_matrix.matrix[1][3] = y;
@@ -9,7 +9,7 @@ fn translation(x: f64, y: f64, z: f64) -> M4x4 {
     new_4x4(base_matrix.matrix)
 }
 
-fn scaling(x: f64, y: f64, z: f64) -> M4x4 {
+pub fn scaling(x: f64, y: f64, z: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4.clone();
     base_matrix.matrix[0][0] = x;
     base_matrix.matrix[1][1] = y;
@@ -17,7 +17,7 @@ fn scaling(x: f64, y: f64, z: f64) -> M4x4 {
     new_4x4(base_matrix.matrix)
 }
 
-fn rotation_x(radians: f64) -> M4x4 {
+pub fn rotation_x(radians: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4.clone();
     base_matrix.matrix[1][1] = radians.cos();
     base_matrix.matrix[1][2] = -radians.sin();
@@ -26,7 +26,7 @@ fn rotation_x(radians: f64) -> M4x4 {
     new_4x4(base_matrix.matrix)
 }
 
-fn rotation_y(radians: f64) -> M4x4 {
+pub fn rotation_y(radians: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4.clone();
     base_matrix.matrix[0][0] = radians.cos();
     base_matrix.matrix[0][2] = radians.sin();
@@ -213,6 +213,34 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
         let p = new_point(2.0, 3.0, 4.0);
         let expected = new_point(2.0, 3.0, 7.0);
         assert_eq!(tx * p, expected)
+    }
+
+    #[test]
+    fn chaining_transformations_in_seq() {
+        let p = new_point(1.0, 0.0, 1.0);
+        let a = rotation_x(PI / 2.0);
+        let b = scaling(5.0, 5.0, 5.0);
+        let c = translation(10.0, 5.0, 7.0);
+
+        let p2 = a * p;
+        assert_eq!(p2, new_point(1.0, -1.0, 0.0));
+
+        let p3 = b * p2;
+        assert_eq!(p3, new_point(5.0, -5.0, 0.0));
+
+        let p4 = c * p3;
+        assert_eq!(p4, new_point(15.0, 0.0, 7.0));
+    }
+
+    #[test]
+    fn chaining_transformations_in_rev() {
+        let p = new_point(1.0, 0.0, 1.0);
+        let a = rotation_x(PI / 2.0);
+        let b = scaling(5.0, 5.0, 5.0);
+        let c = translation(10.0, 5.0, 7.0);
+
+        let t = c * b * a;
+        assert_eq!(t*p, new_point(15.0, 0.0, 7.0));
     }
 
 }

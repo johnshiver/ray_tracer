@@ -70,7 +70,7 @@ impl Canvas {
     }
 }
 
-pub fn new(width: usize, height: usize) -> Canvas {
+pub fn new_canvas(width: usize, height: usize) -> Canvas {
     let default = new_color(0.0, 0.0, 0.0);
     let pixels = vec![vec![default; width]; height];
 
@@ -83,14 +83,14 @@ pub fn new(width: usize, height: usize) -> Canvas {
 
 #[cfg(test)]
 mod tests {
-    use crate::canvas::new;
+    use crate::canvas::new_canvas;
     use crate::color::new_color;
 
     #[test]
     fn create_canvas() {
         let width = 30;
         let height = 30;
-        let test_canvas = new(width, height);
+        let test_canvas = new_canvas(width, height);
         let expected = new_color(0.0, 0.0, 0.0);
         for y in 0..height {
             for x in 0..width {
@@ -110,7 +110,7 @@ mod tests {
     fn write_pixel() {
         let width = 30;
         let height = 30;
-        let mut test_canvas = new(width, height);
+        let mut test_canvas = new_canvas(width, height);
         let expected = new_color(1.0, 0.0, 0.0);
         let written = test_canvas.write_pixel(2, 3, expected);
         assert_eq!(true, written);
@@ -124,7 +124,7 @@ mod tests {
     fn ppm_header() {
         let width = 5;
         let height = 3;
-        let test_canvas = new(width, height);
+        let test_canvas = new_canvas(width, height);
         let expected = "P3\n5 3\n255\n";
         assert_eq!(expected, test_canvas.get_ppm_header())
     }
