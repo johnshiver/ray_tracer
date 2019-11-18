@@ -3,6 +3,8 @@ use uuid::Uuid;
 use crate::tuple::{Tuple, TupleTypeError, new_point, dot};
 use std::ops::Index;
 use std::borrow::Borrow;
+use std::collections::BinaryHeap;
+use std::cmp::Reverse;
 
 pub const SPHERE_ORIGIN: Tuple = Tuple { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }; // is a point
 
@@ -61,6 +63,7 @@ pub fn new_intersection(t:f64, object: Sphere) -> Intersection<Sphere> {
 }
 
 pub struct Intersections<T> {
+    min_heap: BinaryHeap<Intersection<T>>,
     items: Vec<Intersection<T>>,
     count: i64,
 }
@@ -73,8 +76,12 @@ impl Index<usize> for Intersections<Sphere> {
 }
 
 pub fn intersections(items: Vec<Intersection<Sphere>>, count: i64) -> Intersections<Sphere> {
+    let mut min_heap = BinaryHeap::new();
+    for item in items {
+        heap.push(Reverse(item))
+    }
     Intersections{
-        items, count
+        items, count, min_heap
     }
 }
 
@@ -110,11 +117,18 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     intersections(vec![i1, i2], 2)
 }
 
+pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
+    if xs.count < 1 {
+        return None
+    }
+    *Some(xs.min_heap.peek())
+}
+
 
 #[cfg(test)]
 mod tests {
 use crate::tuple::{new_point, new_vector};
-    use crate::rays::{new_ray, position, new_sphere, intersect, new_intersection, intersections};
+    use crate::rays::{new_ray, position, new_sphere, intersect, new_intersection, intersections, hit};
     use std::borrow::Borrow;
 
     #[test]
@@ -205,5 +219,40 @@ use crate::tuple::{new_point, new_vector};
         assert_eq!(xs[1].t, 2.0);
         assert_eq!(xs.count, 2);
     }
+
+    #[test]
+    fn hit_all_intersections_positive() {
+        let s = new_sphere();
+        let i1 = new_intersection(1.0, s.clone());
+        let i2 = new_intersection(2.0, s.clone());
+
+        let xs = intersections(vec![i1, i2], 2);
+        let i = hit(xs).unwrap();
+        assert_eq!(i, i1);
+    }
+
+    #[test]
+    fn hit_some_intersections_negative() {
+        let s = new_sphere();
+        let i1 = new_intersection(-1.0, s.clone());
+        let i2 = new_intersection(1.0, s.clone());
+
+        let xs = intersections(vec![i2, i1], 2);
+        let i = hit(xs).unwrap();
+        assert_eq!(i, i2);
+    }
+
+    #[test]
+    fn hit_all_intersections_negative() {
+        let s = new_sphere();
+        let i1 = new_intersection(-2.0, s.clone());
+        let i2 = new_intersection(-1.0, s.clone());
+
+        let xs = intersections(vec![i2, i1], 2);
+        // i should be none, implement with option
+        let i = hit(xs);
+        assert_eq!(i, None);
+    }
+
 
 }
