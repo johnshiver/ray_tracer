@@ -50,14 +50,11 @@ pub fn discriminant(r: &Ray) -> f64  {
     b.powf(2.0) - (4.0 *a*c)
 }
 
-pub fn intersect(r: &Ray, s: Sphere) -> Intersection {
+// returns set of t values, where ray intersects sphere
+pub fn intersect(r: &Ray, s: Sphere) -> ([f64; 2], i16) {
     let d = discriminant(r);
     if d < 0.0 {
-        // no intersections
-        return Intersection{
-            count: 0,
-            positions: [0.0; 2],
-        }
+        return ([0.0; 2], 0)
     }
     let sphere_to_ray = r.origin - SPHERE_ORIGIN;
     let a = dot(r.direction, r.direction).unwrap();
@@ -68,15 +65,9 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersection {
 
     let mut count = 0;
     if t1 == t2 {
-        count = 1;
-    } else {
-        count = 2;
+        return ([t1, t2], 1)
     }
-
-    Intersection{
-        count,
-        positions: [t1, t2],
-    }
+    ([t1, t2], 2)
 }
 
 
@@ -108,51 +99,51 @@ use crate::tuple::{new_point, new_vector};
     fn ray_intersects_sphere_two_pts() {
         let r = new_ray(new_point(0.0, 0.0, -5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
-        assert_eq!(xs.count, 2);
-        assert_eq!(xs.positions[0], 4.0);
-        assert_eq!(xs.positions[1], 6.0);
+        let (xs, count) = intersect(r.borrow(), s);
+        assert_eq!(count, 2);
+        assert_eq!(xs[0], 4.0);
+        assert_eq!(xs[1], 6.0);
     }
 
     #[test]
     fn ray_intersects_sphere_at_tangent() {
         let r = new_ray(new_point(0.0, 1.0, -5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
-        assert_eq!(xs.count, 1);
+        let (xs, count) = intersect(r.borrow(), s);
+        assert_eq!(count, 1);
         // assuming two intersections for simplicity
-        assert_eq!(xs.positions[0], 5.0);
-        assert_eq!(xs.positions[1], 5.0);
+        assert_eq!(xs[0], 5.0);
+        assert_eq!(xs[1], 5.0);
     }
 
     #[test]
     fn ray_misses_sphere() {
         let r = new_ray(new_point(0.0, 2.0, -5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
-        assert_eq!(xs.count, 0);
+        let (xs, count) = intersect(r.borrow(), s);
+        assert_eq!(count, 0);
     }
 
     #[test]
     fn ray_originates_inside_sphere() {
         let r = new_ray(new_point(0.0, 0.0, 0.0), new_vector(0.0, 0.0, 1.0)).unwrap();
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
-        assert_eq!(xs.count, 2);
+        let (xs, count) = intersect(r.borrow(), s);
+        assert_eq!(count, 2);
         // assuming two intersections for simplicity
-        assert_eq!(xs.positions[0], -1.0);
-        assert_eq!(xs.positions[1], 1.0);
+        assert_eq!(xs[0], -1.0);
+        assert_eq!(xs[1], 1.0);
     }
 
     #[test]
     fn sphere_is_behind_ray() {
         let r = new_ray(new_point(0.0, 0.0, 5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
-        assert_eq!(xs.count, 2);
+        let (xs, count) = intersect(r.borrow(), s);
+        assert_eq!(count, 2);
         // assuming two intersections for simplicity
-        assert_eq!(xs.positions[0], -6.0);
-        assert_eq!(xs.positions[1], -4.0);
+        assert_eq!(xs[0], -6.0);
+        assert_eq!(xst[1], -4.0);
     }
 
 }
