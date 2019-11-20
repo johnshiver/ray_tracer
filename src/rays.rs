@@ -1,12 +1,18 @@
 use uuid::Uuid;
 
-use crate::tuple::{Tuple, TupleTypeError, new_point, dot};
-use std::ops::Index;
+use crate::tuple::{dot, new_point, Tuple, TupleTypeError};
 use std::borrow::Borrow;
-use std::collections::BinaryHeap;
 use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+use std::ops::{Deref, Index};
+use std::slice::SliceIndex;
 
-pub const SPHERE_ORIGIN: Tuple = Tuple { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }; // is a point
+pub const SPHERE_ORIGIN: Tuple = Tuple {
+    x: 0.0,
+    y: 0.0,
+    z: 0.0,
+    w: 1.0,
+}; // is a point
 
 #[derive(Debug)]
 pub struct Ray {
@@ -16,23 +22,19 @@ pub struct Ray {
 
 pub fn new_ray(origin: Tuple, direction: Tuple) -> Result<Ray, TupleTypeError> {
     if !origin.is_point() {
-        return Err(TupleTypeError::new(
-            "origin: is not a a point",
-        ));
+        return Err(TupleTypeError::new("origin: is not a a point"));
     }
     if !direction.is_vector() {
-        return Err(TupleTypeError::new(
-            "direction: is not a vector",
-        ));
+        return Err(TupleTypeError::new("direction: is not a vector"));
     }
-    Ok(Ray{origin, direction})
+    Ok(Ray { origin, direction })
 }
 
 pub fn position(r: &Ray, time: f64) -> Tuple {
     r.origin + r.direction * time
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Sphere {
     pub id: Uuid,
 }
@@ -44,26 +46,35 @@ impl PartialEq for Sphere {
 }
 
 pub fn new_sphere() -> Sphere {
-    Sphere{
-        id: Uuid::new_v4()
-    }
-
+    Sphere { id: Uuid::new_v4() }
 }
 
 #[derive(Debug)]
 pub struct Intersection<T> {
-    pub t: f64,           // value of intersection
-    pub object: T,    // object that was intersected
+    pub t: f64,    // value of intersection
+    pub object: T, // object that was intersected
 }
-
-pub fn new_intersection(t:f64, object: Sphere) -> Intersection<Sphere> {
-    Intersection{
-        t, object
+impl PartialEq for Intersection<Sphere> {
+    fn eq(&self, other: &Self) -> bool {
+        self.object == other.object
     }
 }
 
+impl Copy for Intersection<Sphere> {}
+impl Clone for Intersection<Sphere> {
+    fn clone(&self) -> Self {
+        Intersection {
+            t: self.t,
+            object: self.object,
+        }
+    }
+}
+
+pub fn new_intersection(t: f64, object: Sphere) -> Intersection<Sphere> {
+    Intersection { t, object }
+}
+
 pub struct Intersections<T> {
-    min_heap: BinaryHeap<Intersection<T>>,
     items: Vec<Intersection<T>>,
     count: i64,
 }
@@ -76,28 +87,22 @@ impl Index<usize> for Intersections<Sphere> {
 }
 
 pub fn intersections(items: Vec<Intersection<Sphere>>, count: i64) -> Intersections<Sphere> {
-    let mut min_heap = BinaryHeap::new();
-    for item in items {
-        heap.push(Reverse(item))
-    }
-    Intersections{
-        items, count, min_heap
-    }
+    Intersections { items, count }
 }
 
-pub fn discriminant(r: &Ray) -> f64  {
+pub fn discriminant(r: &Ray) -> f64 {
     let sphere_to_ray = r.origin - SPHERE_ORIGIN;
     let a = dot(r.direction, r.direction).unwrap();
     let b = 2.0 * dot(r.direction, sphere_to_ray).unwrap();
     let c = dot(sphere_to_ray, sphere_to_ray).unwrap() - 1.0;
-    b.powf(2.0) - (4.0 *a*c)
+    b.powf(2.0) - (4.0 * a * c)
 }
 
 // returns set of t values, where ray intersects sphere
 pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     let d = discriminant(r);
     if d < 0.0 {
-        return intersections(vec![], 0)
+        return intersections(vec![], 0);
     }
     let sphere_to_ray = r.origin - SPHERE_ORIGIN;
     let a = dot(r.direction, r.direction).unwrap();
@@ -112,23 +117,40 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
 
     let mut count = 0;
     if t1 == t2 {
-        return intersections(vec![i1, i2], 1)
+        return intersections(vec![i1, i2], 1);
     }
     intersections(vec![i1, i2], 2)
 }
 
 pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
     if xs.count < 1 {
-        return None
+        return None;
     }
-    *Some(xs.min_heap.peek())
-}
+    const FLOAT_MAX: f64 = 99999999.0;
+    let mut smallest = Intersection {
+        t: FLOAT_MAX, // TODO: get a proper max
+        object: Sphere {
+            id: Default::default(),
+        },
+    };
 
+    for i in xs.items {
+        if i.t < smallest.t && i.t >= 0.0 {
+            smallest = i;
+        }
+    }
+    if smallest.t == FLOAT_MAX {
+        return None;
+    }
+    Some(smallest)
+}
 
 #[cfg(test)]
 mod tests {
-use crate::tuple::{new_point, new_vector};
-    use crate::rays::{new_ray, position, new_sphere, intersect, new_intersection, intersections, hit};
+    use crate::rays::{
+        hit, intersect, intersections, new_intersection, new_ray, new_sphere, position,
+    };
+    use crate::tuple::{new_point, new_vector};
     use std::borrow::Borrow;
 
     #[test]
@@ -163,7 +185,7 @@ use crate::tuple::{new_point, new_vector};
     fn ray_intersects_sphere_at_tangent() {
         let r = new_ray(new_point(0.0, 1.0, -5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
         let s = new_sphere();
-        let xs  = intersect(r.borrow(), s);
+        let xs = intersect(r.borrow(), s);
         assert_eq!(xs.count, 1);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, 5.0);
@@ -182,7 +204,7 @@ use crate::tuple::{new_point, new_vector};
     fn ray_originates_inside_sphere() {
         let r = new_ray(new_point(0.0, 0.0, 0.0), new_vector(0.0, 0.0, 1.0)).unwrap();
         let s = new_sphere();
-        let xs  = intersect(r.borrow(), s);
+        let xs = intersect(r.borrow(), s);
         assert_eq!(xs.count, 2);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, -1.0);
@@ -193,7 +215,7 @@ use crate::tuple::{new_point, new_vector};
     fn sphere_is_behind_ray() {
         let r = new_ray(new_point(0.0, 0.0, 5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
         let s = new_sphere();
-        let xs  = intersect(r.borrow(), s);
+        let xs = intersect(r.borrow(), s);
         assert_eq!(xs.count, 2);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, -6.0);
@@ -253,6 +275,4 @@ use crate::tuple::{new_point, new_vector};
         let i = hit(xs);
         assert_eq!(i, None);
     }
-
-
 }
