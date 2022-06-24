@@ -1,8 +1,8 @@
-use crate::tuple::{Tuple};
+use crate::tuple::Tuple;
 use std::borrow::Borrow;
-use std::ops::{Index, Mul};
-use std::fmt;
 use std::error::Error;
+use std::fmt;
+use std::ops::{Index, Mul};
 
 const EPSILON: f64 = 0.00001;
 pub const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
@@ -11,7 +11,7 @@ pub const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
         [0.0, 1.0, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0],
-    ]
+    ],
 };
 
 fn equal_f64(a: f64, b: f64) -> bool {
@@ -67,7 +67,7 @@ impl Mul<M4x4> for M4x4 {
         let mut new_matrix = [[0.0; 4]; 4];
         for y in 0..4 {
             for x in 0..4 {
-                new_matrix[y][x] = cal_index_matrix_multi(self.matrix, other.matrix, x, y);
+                new_matrix[y][x] = cal_index_matrix_multi(&self.matrix, &other.matrix, x, y);
             }
         }
         new_4x4(new_matrix)
@@ -87,7 +87,7 @@ impl Mul<Tuple> for M4x4 {
     }
 }
 
-fn cal_index_matrix_multi(m1: [[f64; 4]; 4], m2: [[f64; 4]; 4], x: usize, y: usize) -> f64 {
+fn cal_index_matrix_multi(m1: &[[f64; 4]; 4], m2: &[[f64; 4]; 4], x: usize, y: usize) -> f64 {
     // for y 1, x 0 of new matrix
     // line up row 1 for m1 and col 1 for m2
     let row = m1[y];
@@ -127,11 +127,11 @@ pub fn submatrix_4x4(matrix: &M4x4, row: usize, col: usize) -> M3x3 {
     let mut write_y = 0;
     for y in 0..4 {
         if y == row {
-            continue
+            continue;
         }
         for x in 0..4 {
             if x == col {
-                continue
+                continue;
             }
             let val = matrix.matrix[y][x];
             new_m[write_y][write_x] = val;
@@ -150,7 +150,7 @@ pub fn minor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
 pub fn cofactor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
     let cofactor = minor_4x4(matrix, row, col);
     if (row + col) % 2 == 0 {
-        return cofactor
+        return cofactor;
     }
     -1.0 * cofactor
 }
@@ -165,7 +165,7 @@ pub fn determinant_4x4(matrix: &M4x4) -> f64 {
 
 pub fn invertible_4x4(matrix: &M4x4) -> bool {
     if determinant_4x4(matrix.borrow()) == 0.0 {
-        return false
+        return false;
     }
     true
 }
@@ -204,7 +204,9 @@ impl PartialEq for MatrixNotInvertibleError {
 
 pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixNotInvertibleError> {
     if !invertible_4x4(matrix.borrow()) {
-        return Err(MatrixNotInvertibleError::new("invert_4x4: matrix not invertible"));
+        return Err(MatrixNotInvertibleError::new(
+            "invert_4x4: matrix not invertible",
+        ));
     }
     let mut cofactors = [[0.0; 4]; 4];
     let det = determinant_4x4(matrix.borrow());
@@ -261,11 +263,11 @@ pub fn submatrix_3x3(matrix: &M3x3, row: usize, col: usize) -> M2x2 {
     let mut write_y = 0;
     for y in 0..3 {
         if y == row {
-            continue
+            continue;
         }
         for x in 0..3 {
             if x == col {
-                continue
+                continue;
             }
             let val = matrix.matrix[y][x];
             new_m[write_y][write_x] = val;
@@ -284,7 +286,7 @@ pub fn minor_3x3(matrix: &M3x3, row: usize, col: usize) -> f64 {
 pub fn cofactor_3x3(matrix: &M3x3, row: usize, col: usize) -> f64 {
     let cofactor = minor_3x3(matrix, row, col);
     if (row + col) % 2 == 0 {
-        return cofactor
+        return cofactor;
     }
     -1.0 * cofactor
 }
@@ -335,13 +337,16 @@ pub fn new_2x2(matrix: [[f64; 2]; 2]) -> M2x2 {
 }
 
 pub fn determinant_2x2(m: M2x2) -> f64 {
-   (m.matrix[0][0] * m.matrix[1][1]) - (m.matrix[0][1] * m.matrix[1][0])
+    (m.matrix[0][0] * m.matrix[1][1]) - (m.matrix[0][1] * m.matrix[1][0])
 }
-
 
 #[cfg(test)]
 mod tests {
-    use crate::matrix::{new_2x2, new_3x3, new_4x4, transpose, IDENTITY_MATRIX_4X4, MatrixIndex, determinant_2x2, submatrix_3x3, submatrix_4x4, minor_3x3, cofactor_3x3, determinant_3x3, determinant_4x4, invertible_4x4, cofactor_4x4, invert_4x4};
+    use crate::matrix::{
+        cofactor_3x3, cofactor_4x4, determinant_2x2, determinant_3x3, determinant_4x4, invert_4x4,
+        invertible_4x4, minor_3x3, new_2x2, new_3x3, new_4x4, submatrix_3x3, submatrix_4x4,
+        transpose, MatrixIndex, IDENTITY_MATRIX_4X4,
+    };
     use crate::tuple::{new_point, Tuple};
     use std::borrow::Borrow;
 
@@ -537,15 +542,8 @@ mod tests {
 
     #[test]
     fn submatrix_3x3_2x2() {
-        let test_m3 = new_3x3([
-            [1.0, 5.0, 0.0],
-            [-3.0, 2.0, 7.0],
-            [0.0, 6.0, -3.0],
-        ]);
-        let expected = new_2x2([
-            [-3.0, 2.0],
-            [0.0, 6.0],
-        ]);
+        let test_m3 = new_3x3([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]]);
+        let expected = new_2x2([[-3.0, 2.0], [0.0, 6.0]]);
         assert_eq!(submatrix_3x3(test_m3.borrow(), 0, 2), expected);
     }
 
@@ -557,42 +555,26 @@ mod tests {
             [-1.0, 0.0, 8.0, 2.0],
             [-7.0, 1.0, -1.0, 1.0],
         ]);
-        let expected = new_3x3([
-            [-6.0, 1.0, 6.0],
-            [-8.0, 8.0, 6.0],
-            [-7.0, -1.0, 1.0],
-        ]);
+        let expected = new_3x3([[-6.0, 1.0, 6.0], [-8.0, 8.0, 6.0], [-7.0, -1.0, 1.0]]);
         assert_eq!(submatrix_4x4(test_m3.borrow(), 2, 1), expected);
     }
 
     #[test]
     fn minor_3x3_test() {
-        let a = new_3x3([
-            [3.0, 5.0, 0.0],
-            [2.0, -1.0, -7.0],
-            [6.0, -1.0, 5.0],
-        ]);
+        let a = new_3x3([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
         assert_eq!(minor_3x3(a.borrow(), 1, 0), 25.0);
     }
 
     #[test]
     fn cofactor_3x3_test() {
-        let a = new_3x3([
-            [3.0, 5.0, 0.0],
-            [2.0, -1.0, -7.0],
-            [6.0, -1.0, 5.0],
-        ]);
+        let a = new_3x3([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
         assert_eq!(cofactor_3x3(a.borrow(), 0, 0), -12.0);
         assert_eq!(cofactor_3x3(a.borrow(), 1, 0), -25.0);
     }
 
     #[test]
     fn determinant_3x3_test() {
-        let a = new_3x3([
-            [1.0, 2.0, 6.0],
-            [-5.0, 8.0, -4.0],
-            [2.0, 6.0, 4.0],
-        ]);
+        let a = new_3x3([[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]]);
         assert_eq!(determinant_3x3(a.borrow()), -196.0);
     }
 

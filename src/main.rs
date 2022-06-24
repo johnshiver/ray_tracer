@@ -1,9 +1,9 @@
 use crate::canvas::new_canvas;
 use crate::color::new_color;
 use crate::environment::new_environment;
+use crate::matrix_transformations::rotation_y;
 use crate::projectile::new_projectile;
 use crate::tuple::{new_point, new_vector, normalize};
-use crate::matrix_transformations::{rotation_y};
 use std::f64::consts::PI;
 
 mod canvas;
@@ -12,8 +12,8 @@ mod environment;
 mod matrix;
 mod matrix_transformations;
 mod projectile;
-mod tuple;
 mod rays;
+mod tuple;
 
 fn main() {
     analog_clock();
@@ -71,23 +71,20 @@ fn analog_clock() {
     let width = 100;
     let height = 100;
     let rad = width as f64 * 0.45;
-    let mut c= new_canvas(width, height);
-    let white= new_color(1.0, 1.0, 1.0);
+    let mut c = new_canvas(width, height);
+    let white = new_color(1.0, 1.0, 1.0);
 
     let origin = new_point(width as f64 / 2.0_f64, 0.0, height as f64 / 2.0_f64);
     let noon = new_point(0.0, 0.0, 1.0);
 
     const HOUR: f64 = PI / 6.0_f64;
 
-    for i in 0..12{
+    for i in 0..12 {
         let r = rotation_y(i as f64 * HOUR);
         let clock_hand = r * noon * rad;
         let final_pos = new_point(origin.x + clock_hand.x, 0.0, origin.z + clock_hand.z);
         c.write_pixel(final_pos.x as usize, final_pos.z as usize, white);
     }
 
-
     c.to_ppm("analog_clock.ppm");
-
-
 }

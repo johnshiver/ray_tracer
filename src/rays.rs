@@ -1,11 +1,8 @@
 use uuid::Uuid;
 
-use crate::tuple::{dot, new_point, Tuple, TupleTypeError};
+use crate::tuple::{dot, Tuple, TupleTypeError};
 use std::borrow::Borrow;
-use std::cmp::Reverse;
-use std::collections::BinaryHeap;
 use std::ops::{Deref, Index};
-use std::slice::SliceIndex;
 
 pub const SPHERE_ORIGIN: Tuple = Tuple {
     x: 0.0,
@@ -115,7 +112,6 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     let i1 = new_intersection(t1, s.clone());
     let i2 = new_intersection(t2, s.clone());
 
-    let mut count = 0;
     if t1 == t2 {
         return intersections(vec![i1, i2], 1);
     }
@@ -126,7 +122,7 @@ pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
     if xs.count < 1 {
         return None;
     }
-    const FLOAT_MAX: f64 = 99999999.0;
+    const FLOAT_MAX: f64 = 999_999_999.0;
     let mut smallest = Intersection {
         t: FLOAT_MAX, // TODO: get a proper max
         object: Sphere {
@@ -256,8 +252,8 @@ mod tests {
     #[test]
     fn hit_some_intersections_negative() {
         let s = new_sphere();
-        let i1 = new_intersection(-1.0, s.clone());
-        let i2 = new_intersection(1.0, s.clone());
+        let i1 = new_intersection(-1.0, s);
+        let i2 = new_intersection(1.0, s);
 
         let xs = intersections(vec![i2, i1], 2);
         let i = hit(xs).unwrap();
@@ -267,8 +263,8 @@ mod tests {
     #[test]
     fn hit_all_intersections_negative() {
         let s = new_sphere();
-        let i1 = new_intersection(-2.0, s.clone());
-        let i2 = new_intersection(-1.0, s.clone());
+        let i1 = new_intersection(-2.0, s);
+        let i2 = new_intersection(-1.0, s);
 
         let xs = intersections(vec![i2, i1], 2);
         // i should be none, implement with option
