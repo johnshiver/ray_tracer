@@ -17,6 +17,8 @@ mod tuple;
 
 fn main() {
     analog_clock();
+    create_test_image();
+    simulate_projectile();
 }
 
 fn create_test_image() {
@@ -33,16 +35,17 @@ fn create_test_image() {
     for y in 1..height {
         canvas.write_pixel(0, y, blue);
     }
-    canvas.to_ppm("test_ppm.ppm");
+    canvas.to_ppm("test_ppm.ppm").expect("while creating ppm");
 }
 
 fn simulate_projectile() {
     let start = new_point(0.0, 1.0, 0.0);
-    let velocity = normalize(new_vector(1.0, 1.8, 0.0) * 11.25).unwrap();
+    let velocity = new_vector(1.0, 1.8, 0.0) * 11.25;
+    let velocity = normalize(&velocity).expect("while normalizing velocity");
     let mut p = new_projectile(start, velocity);
     let gravity = new_vector(0.0, -0.1, 0.0);
     let wind = new_vector(0.01, 0.0, 0.0);
-    let mut c = canvas::new_canvas(900, 550);
+    let mut c = new_canvas(900, 550);
     let env = new_environment(gravity, wind);
     let white = new_color(1.0, 1.0, 1.0);
 
@@ -64,7 +67,7 @@ fn simulate_projectile() {
             white,
         );
     }
-    c.to_ppm("rocket_shot.ppm");
+    c.to_ppm("rocket_shot.ppm").expect("while creating ppm");
 }
 
 fn analog_clock() {
@@ -86,5 +89,5 @@ fn analog_clock() {
         c.write_pixel(final_pos.x as usize, final_pos.z as usize, white);
     }
 
-    c.to_ppm("analog_clock.ppm");
+    c.to_ppm("analog_clock.ppm").expect("while creating ppm");
 }

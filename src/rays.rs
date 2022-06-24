@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::tuple::{dot, Tuple, TupleTypeError};
 use std::borrow::Borrow;
-use std::ops::{Deref, Index};
+use std::ops::Index;
 
 pub const SPHERE_ORIGIN: Tuple = Tuple {
     x: 0.0,

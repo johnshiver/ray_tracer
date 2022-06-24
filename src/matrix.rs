@@ -79,10 +79,10 @@ impl Mul<Tuple> for M4x4 {
 
     fn mul(self, other: Tuple) -> Tuple {
         Tuple {
-            x: cal_index_tuple_multi(self.matrix, other, 0),
-            y: cal_index_tuple_multi(self.matrix, other, 1),
-            z: cal_index_tuple_multi(self.matrix, other, 2),
-            w: cal_index_tuple_multi(self.matrix, other, 3),
+            x: cal_index_tuple_multi(&self.matrix, other, 0),
+            y: cal_index_tuple_multi(&self.matrix, other, 1),
+            z: cal_index_tuple_multi(&self.matrix, other, 2),
+            w: cal_index_tuple_multi(&self.matrix, other, 3),
         }
     }
 }
@@ -100,7 +100,7 @@ fn cal_index_matrix_multi(m1: &[[f64; 4]; 4], m2: &[[f64; 4]; 4], x: usize, y: u
     final_val
 }
 
-fn cal_index_tuple_multi(m1: [[f64; 4]; 4], t: Tuple, r: usize) -> f64 {
+fn cal_index_tuple_multi(m1: &[[f64; 4]; 4], t: Tuple, r: usize) -> f64 {
     // for y 1, x 0 of new matrix
     // line up row 1 for m1 and col 1 for m2
     let row = m1[r];
@@ -212,7 +212,7 @@ pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixNotInvertibleError> {
     let det = determinant_4x4(matrix.borrow());
     for y in 0..4 {
         for x in 0..4 {
-            let mut c = cofactor_4x4(matrix.borrow(), y, x);
+            let c = cofactor_4x4(matrix.borrow(), y, x);
             // sneaky tricky to accomplish transpose operation
             cofactors[x][y] = c / det;
         }
@@ -280,7 +280,7 @@ pub fn submatrix_3x3(matrix: &M3x3, row: usize, col: usize) -> M2x2 {
 }
 
 pub fn minor_3x3(matrix: &M3x3, row: usize, col: usize) -> f64 {
-    determinant_2x2(submatrix_3x3(matrix, row, col))
+    determinant_2x2(&submatrix_3x3(matrix, row, col))
 }
 
 pub fn cofactor_3x3(matrix: &M3x3, row: usize, col: usize) -> f64 {
@@ -336,7 +336,7 @@ pub fn new_2x2(matrix: [[f64; 2]; 2]) -> M2x2 {
     M2x2 { matrix }
 }
 
-pub fn determinant_2x2(m: M2x2) -> f64 {
+pub fn determinant_2x2(m: &M2x2) -> f64 {
     (m.matrix[0][0] * m.matrix[1][1]) - (m.matrix[0][1] * m.matrix[1][0])
 }
 
@@ -492,7 +492,7 @@ mod tests {
 
     #[test]
     fn create_2x2_matrix() {
-        let mut test_matrix = [[-3.0, 5.0], [1.0, -2.0]];
+        let test_matrix = [[-3.0, 5.0], [1.0, -2.0]];
         let test_m2x2 = new_2x2(test_matrix);
         assert_eq!(test_m2x2[&MatrixIndex { x: 0, y: 0 }], -3.0);
         assert_eq!(test_m2x2[&MatrixIndex { x: 1, y: 0 }], 5.0);
@@ -514,7 +514,7 @@ mod tests {
     #[test]
     fn determinant_2x2_matrices() {
         let m1 = [[1.0, 5.0], [-3.0, 2.0]];
-        assert_eq!(determinant_2x2(new_2x2(m1)), 17.0);
+        assert_eq!(determinant_2x2(&new_2x2(m1)), 17.0);
     }
 
     #[test]
@@ -597,8 +597,8 @@ mod tests {
             [4.0, -9.0, 3.0, -7.0],
             [9.0, 1.0, 7.0, -6.0],
         ]);
-        assert_eq!(determinant_4x4(a.borrow()), -2120.0);
-        assert_eq!(invertible_4x4(a.borrow()), true);
+        assert_eq!(determinant_4x4(&a), -2120.0);
+        assert!(invertible_4x4(&a));
 
         let a = new_4x4([
             [-4.0, 2.0, -2.0, -3.0],
@@ -606,8 +606,8 @@ mod tests {
             [0.0, -5.0, 1.0, -5.0],
             [0.0, 0.0, 0.0, 0.0],
         ]);
-        assert_eq!(determinant_4x4(a.borrow()), 0.0);
-        assert_eq!(invertible_4x4(a.borrow()), false);
+        assert_eq!(determinant_4x4(&a), 0.0);
+        assert!(!invertible_4x4(&a))
     }
 
     #[test]
@@ -618,9 +618,9 @@ mod tests {
             [7.0, 7.0, -6.0, -7.0],
             [1.0, -3.0, 7.0, 4.0],
         ]);
-        assert_eq!(determinant_4x4(a.borrow()), 532.0);
-        assert_eq!(cofactor_4x4(a.borrow(), 2, 3), -160.0);
-        assert_eq!(cofactor_4x4(a.borrow(), 3, 2), 105.0);
+        assert_eq!(determinant_4x4(&a), 532.0);
+        assert_eq!(cofactor_4x4(&a, 2, 3), -160.0);
+        assert_eq!(cofactor_4x4(&a, 3, 2), 105.0);
 
         let b = invert_4x4(a.borrow()).unwrap();
         let expected = new_4x4([

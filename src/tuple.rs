@@ -97,10 +97,10 @@ impl Mul<f64> for Tuple {
 
     fn mul(self, scalar: f64) -> Self {
         Tuple {
-            x: self.x * scalar,
-            y: self.y * scalar,
-            z: self.z * scalar,
-            w: self.w * scalar,
+            x: &self.x * scalar,
+            y: &self.y * scalar,
+            z: &self.z * scalar,
+            w: &self.w * scalar,
         }
     }
 }
@@ -134,12 +134,10 @@ impl Tuple {
     pub fn is_unit_vector(&self) -> Result<bool, TupleTypeError> {
         let is_vec_res = self.is_vector();
         if !is_vec_res {
-            return Err(TupleTypeError::new(
-                "is_unit_vector: tuple is not a vector",
-            ));
+            return Err(TupleTypeError::new("is_unit_vector: tuple is not a vector"));
         }
 
-        let res = magnitude(self.clone());
+        let res = magnitude(self);
         match res {
             Ok(m) => Ok(m == 1.0),
             Err(e) => Err(e),
@@ -181,7 +179,7 @@ impl PartialEq for TupleTypeError {
 
 // Functions ------------------------------------------------------------------------
 
-pub fn magnitude(vector: Tuple) -> Result<f64, TupleTypeError> {
+pub fn magnitude(vector: &Tuple) -> Result<f64, TupleTypeError> {
     if !vector.is_vector() {
         return Err(TupleTypeError::new(
             "tuple passed to magnitude must be a vector",
@@ -192,7 +190,7 @@ pub fn magnitude(vector: Tuple) -> Result<f64, TupleTypeError> {
     Ok(magnitude)
 }
 
-pub fn normalize(vector: Tuple) -> Result<Tuple, TupleTypeError> {
+pub fn normalize(vector: &Tuple) -> Result<Tuple, TupleTypeError> {
     if !vector.is_vector() {
         return Err(TupleTypeError::new(
             "tuple passed to normalize must be a vector",
@@ -224,7 +222,7 @@ pub fn dot(vec_a: Tuple, vec_b: Tuple) -> Result<f64, TupleTypeError> {
 }
 
 // Returns a new vector that is perpendicular to both of the original vectors
-fn cross(vec_a: Tuple, vec_b: Tuple) -> Result<Tuple, TupleTypeError> {
+fn cross(vec_a: &Tuple, vec_b: &Tuple) -> Result<Tuple, TupleTypeError> {
     if !(vec_a.is_vector() && vec_b.is_vector()) {
         return Err(TupleTypeError::new(
             "dot: both vec_a and vec_b must be vectors",
@@ -248,8 +246,8 @@ mod tests {
     #[test]
     fn new_vector_is_vector() {
         let x = new_vector(4.3, -4.2, 3.1);
-        assert_eq!(true, x.is_vector());
-        assert_eq!(false, x.is_point());
+        assert!(x.is_vector());
+        assert!(!x.is_point());
         assert_eq!(0.0, x.w);
     }
 
@@ -302,7 +300,7 @@ mod tests {
 
         let res = a + b;
         assert_eq!(res, expected);
-        assert_eq!(true, res.is_point());
+        assert!(res.is_point());
     }
 
     #[test]
@@ -313,7 +311,7 @@ mod tests {
 
         let res = a - b;
         assert_eq!(res, expected);
-        assert_eq!(true, res.is_vector());
+        assert!(res.is_vector());
     }
 
     #[test]
@@ -393,56 +391,53 @@ mod tests {
     fn magnitude_success() {
         let a = new_vector(1.0, 0.0, 0.0);
         let expected = 1.0;
-        let res = magnitude(a);
+        let res = magnitude(&a);
         match res {
             Ok(m) => assert_eq!(m, expected),
-            Err(e) => assert!(
-                false,
-                "error calculating magnitude when there should be none"
-            ),
+            Err(_e) => panic!("error calculating magnitude when there should be none"),
         }
 
         let b = new_vector(0.0, 1.0, 0.0);
         let expected = 1.0;
-        let res = magnitude(b);
+        let res = magnitude(&b);
         match res {
             Ok(m) => assert_eq!(m, expected),
-            Err(e) => assert!(
-                false,
-                "error calculating magnitude when there should be none"
+            Err(e) => panic!(
+                "error calculating magnitude when there should be none: {}",
+                e
             ),
         }
 
         let c = new_vector(0.0, 0.0, 1.0);
         let expected = 1.0;
-        let res = magnitude(c);
+        let res = magnitude(&c);
         match res {
             Ok(m) => assert_eq!(m, expected),
-            Err(e) => assert!(
-                false,
-                "error calculating magnitude when there should be none"
+            Err(e) => panic!(
+                "error calculating magnitude when there should be none {}",
+                e
             ),
         }
 
         let d = new_vector(1.0, 2.0, 3.0);
         let expected = 14.0_f64.sqrt();
-        let res = magnitude(d);
+        let res = magnitude(&d);
         match res {
             Ok(m) => assert_eq!(m, expected),
-            Err(e) => assert!(
-                false,
-                "error calculating magnitude when there should be none"
+            Err(e) => panic!(
+                "error calculating magnitude when there should be none: {}",
+                e
             ),
         }
 
         let e = new_vector(-1.0, -2.0, -3.0);
         let expected = 14.0_f64.sqrt();
-        let res = magnitude(e);
+        let res = magnitude(&e);
         match res {
             Ok(m) => assert_eq!(m, expected),
-            Err(e) => assert!(
-                false,
-                "error calculating magnitude when there should be none"
+            Err(e) => panic!(
+                "error calculating magnitude when there should be none: {}",
+                e
             ),
         }
     }
@@ -451,9 +446,9 @@ mod tests {
     fn magnitude_error() {
         let e = new_point(-1.0, -2.0, -3.0);
         let expected = TupleTypeError::new("tuple passed to magnitude must be a vector");
-        let res = magnitude(e);
+        let res = magnitude(&e);
         match res {
-            Ok(m) => assert!(false, "this should have been an error"),
+            Ok(_) => panic!("this should have been an error"),
             Err(e) => assert_eq!(expected, e),
         }
     }
@@ -462,21 +457,21 @@ mod tests {
     fn is_unit_vector_cases() {
         let a = new_vector(1.0, 0.0, 0.0);
         let expected = 1.0;
-        let res = magnitude(a);
+        let res = magnitude(&a);
         match res {
             Ok(m) => assert_eq!(m, expected),
-            Err(e) => assert!(
-                false,
-                "error calculating magnitude when there should be none"
+            Err(e) => panic!(
+                "error calculating magnitude when there should be none: {}",
+                e
             ),
         }
 
         let is_uv_res = a.is_unit_vector();
         match is_uv_res {
             Ok(m) => assert_eq!(m, true),
-            Err(e) => assert!(
-                false,
-                "error calculating is_unit_vector when there should be none"
+            Err(e) => panic!(
+                "error calculating is_unit_vector when there should be none: {}",
+                e
             ),
         }
     }
@@ -486,41 +481,41 @@ mod tests {
         let a = new_vector(4.0, 0.0, 0.0);
         let expected = new_vector(1.0, 0.0, 0.0);
 
-        let normalize_res = normalize(a);
+        let normalize_res = normalize(&a);
         match normalize_res {
             Ok(nv) => assert_eq!(nv, expected),
-            Err(_e) => assert!(
-                false,
-                "error calculating normalize_res when there should be none"
+            Err(e) => panic!(
+                "error calculating normalize_res when there should be none: {}",
+                e
             ),
         }
 
         let a = new_vector(1.0, 2.0, 3.0);
         let expected = new_vector(0.26726, 0.53452, 0.80178);
-        let normalize_res = normalize(a);
+        let normalize_res = normalize(&a);
         match normalize_res {
             Ok(nv) => assert_eq!(nv, expected),
-            Err(_e) => assert!(
-                false,
-                "error calculating normalize_res when there should be none"
+            Err(e) => panic!(
+                "error calculating normalize_res when there should be none: {}",
+                e
             ),
         }
 
         let a = new_vector(1.0, 2.0, 3.0);
-        let expected = new_vector(0.26726, 0.53452, 0.80178);
-        let normalize_res = normalize(a);
+        // let expected = new_vector(0.26726, 0.53452, 0.80178);
+        let normalize_res = normalize(&a);
         let normalized_vector = normalize_res.unwrap();
         let expected_mag = 1.0;
-        assert_eq!(expected_mag, magnitude(normalized_vector).unwrap());
+        assert_eq!(expected_mag, magnitude(&normalized_vector).unwrap());
     }
 
     #[test]
     fn normalize_failure() {
         let e = new_point(-1.0, -2.0, -3.0);
         let expected = TupleTypeError::new("tuple passed to normalize must be a vector");
-        let res = normalize(e);
+        let res = normalize(&e);
         match res {
-            Ok(m) => assert!(false, "this should have been an error"),
+            Ok(_) => panic!("this should have been an error"),
             Err(e) => assert_eq!(expected, e),
         }
     }
@@ -541,7 +536,7 @@ mod tests {
         let expected_a_b = new_vector(-1.0, 2.0, -1.0);
         let expected_b_a = new_vector(1.0, -2.0, 1.0);
 
-        assert_eq!(cross(vec_a, vec_b).unwrap(), expected_a_b);
-        assert_eq!(cross(vec_b, vec_a).unwrap(), expected_b_a);
+        assert_eq!(cross(&vec_a, &vec_b).unwrap(), expected_a_b);
+        assert_eq!(cross(&vec_b, &vec_a).unwrap(), expected_b_a);
     }
 }
