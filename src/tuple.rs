@@ -97,10 +97,10 @@ impl Mul<f64> for Tuple {
 
     fn mul(self, scalar: f64) -> Self {
         Tuple {
-            x: &self.x * scalar,
-            y: &self.y * scalar,
-            z: &self.z * scalar,
-            w: &self.w * scalar,
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+            w: self.w * scalar,
         }
     }
 }
@@ -159,8 +159,8 @@ impl TupleTypeError {
     }
 }
 
-impl fmt::Display for TupleTypeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for TupleTypeError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.details)
     }
 }
@@ -254,8 +254,8 @@ mod tests {
     #[test]
     fn new_point_is_point() {
         let x = new_point(4.3, -4.2, 3.1);
-        assert_eq!(false, x.is_vector());
-        assert_eq!(true, x.is_point());
+        assert!(!x.is_vector());
+        assert!(x.is_point());
         assert_eq!(1.0, x.w);
     }
 
@@ -322,7 +322,7 @@ mod tests {
 
         let res = a - b;
         assert_eq!(res, expected);
-        assert_eq!(true, res.is_point());
+        assert!(res.is_point());
     }
 
     #[test]
@@ -333,7 +333,7 @@ mod tests {
 
         let res = a - b;
         assert_eq!(res, expected);
-        assert_eq!(true, res.is_vector());
+        assert!(res.is_vector());
     }
 
     #[test]
@@ -468,7 +468,7 @@ mod tests {
 
         let is_uv_res = a.is_unit_vector();
         match is_uv_res {
-            Ok(m) => assert_eq!(m, true),
+            Ok(m) => assert!(m),
             Err(e) => panic!(
                 "error calculating is_unit_vector when there should be none: {}",
                 e

@@ -1,4 +1,4 @@
-use crate::matrix::{M4x4, new_4x4, IDENTITY_MATRIX_4X4};
+use crate::matrix::{new_4x4, M4x4, IDENTITY_MATRIX_4X4};
 
 // moves a point
 pub fn translation(x: f64, y: f64, z: f64) -> M4x4 {
@@ -56,11 +56,13 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
     new_4x4(base_matrix.matrix)
 }
 
-
-#[cfg(test)]mod tests {
-    use crate::tuple::{new_point, new_vector};
-    use crate::matrix_transformations::{translation, scaling, rotation_x, rotation_y, rotation_z, shearing};
+#[cfg(test)]
+mod tests {
     use crate::matrix::invert_4x4;
+    use crate::matrix_transformations::{
+        rotation_x, rotation_y, rotation_z, scaling, shearing, translation,
+    };
+    use crate::tuple::{new_point, new_vector};
     use std::borrow::Borrow;
     use std::f64::consts::PI;
 
@@ -126,7 +128,7 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
         let p = new_point(0.0, 1.0, 0.0);
         let half_quarter = rotation_x(PI / 4.0);
         let full_quarter = rotation_x(PI / 2.0);
-        let exp1 = new_point(0.0, 2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0);
+        let exp1 = new_point(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0);
         let exp2 = new_point(0.0, 0.0, 1.0);
 
         assert_eq!(half_quarter * p, exp1);
@@ -138,7 +140,7 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
         let p = new_point(0.0, 1.0, 0.0);
         let half_quarter = rotation_x(PI / 4.0);
         let inv = invert_4x4(half_quarter.borrow()).unwrap();
-        let exp = new_point(0.0, 2.0_f64.sqrt()/2.0, -2.0_f64.sqrt()/2.0);
+        let exp = new_point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
 
         assert_eq!(inv * p, exp);
     }
@@ -148,7 +150,7 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
         let p = new_point(0.0, 0.0, 1.0);
         let half_quarter = rotation_y(PI / 4.0);
         let full_quarter = rotation_y(PI / 2.0);
-        let exp1 = new_point(2.0_f64.sqrt()/2.0, 0.0, 2.0_f64.sqrt()/2.0);
+        let exp1 = new_point(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0);
         let exp2 = new_point(1.0, 0.0, 0.0);
 
         assert_eq!(half_quarter * p, exp1);
@@ -160,7 +162,7 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
         let p = new_point(0.0, 1.0, 0.0);
         let half_quarter = rotation_z(PI / 4.0);
         let full_quarter = rotation_z(PI / 2.0);
-        let exp1 = new_point(-2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0, 0.0);
+        let exp1 = new_point(-2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
         let exp2 = new_point(-1.0, 0.0, 0.0);
 
         assert_eq!(half_quarter * p, exp1);
@@ -240,7 +242,6 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
         let c = translation(10.0, 5.0, 7.0);
 
         let t = c * b * a;
-        assert_eq!(t*p, new_point(15.0, 0.0, 7.0));
+        assert_eq!(t * p, new_point(15.0, 0.0, 7.0));
     }
-
 }
