@@ -38,7 +38,7 @@ impl Index<&MatrixIndex> for M4x4 {
 
     fn index(&self, index: &MatrixIndex) -> &Self::Output {
         match index {
-            MatrixIndex { x: 0..=3, y: 0..=3 } => self.matrix[index.y][index.x].borrow(),
+            MatrixIndex { x: 0..=3, y: 0..=3 } => &self.matrix[index.y][index.x],
             _ => &-99.0,
         }
     }

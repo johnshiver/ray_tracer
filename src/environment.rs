@@ -14,5 +14,5 @@ pub fn new_environment(gravity: Tuple, wind: Tuple) -> Environment {
 pub fn tick(env: Environment, projectile: Projectile) -> Projectile {
     let new_pos = projectile.position + projectile.velocity;
     let new_vel = projectile.velocity + env.gravity + env.wind;
-    return new_projectile(new_pos, new_vel);
+    new_projectile(new_pos, new_vel)
 }

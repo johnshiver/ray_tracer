@@ -8,9 +8,9 @@ pub struct Color {
 }
 
 pub fn new_color(red: f64, green: f64, blue: f64) -> Color {
-    return Color {
+    Color {
         components: new_point(red, green, blue),
-    };
+    }
 }
 
 impl Sub for Color {
@@ -18,7 +18,7 @@ impl Sub for Color {
 
     fn sub(self, other: Self) -> Self {
         let new_components = self.components - other.components;
-        return new_color(new_components.x, new_components.y, new_components.z);
+        new_color(new_components.x, new_components.y, new_components.z)
     }
 }
 
@@ -27,7 +27,7 @@ impl Add for Color {
 
     fn add(self, other: Self) -> Self {
         let new_components = self.components + other.components;
-        return new_color(new_components.x, new_components.y, new_components.z);
+        new_color(new_components.x, new_components.y, new_components.z)
     }
 }
 
@@ -36,7 +36,7 @@ impl Mul<f64> for Color {
 
     fn mul(self, scalar: f64) -> Self {
         let new_components = self.components * scalar;
-        return new_color(new_components.x, new_components.y, new_components.z);
+        new_color(new_components.x, new_components.y, new_components.z)
     }
 }
 
@@ -74,7 +74,7 @@ impl std::fmt::Display for Color {
 }
 
 fn scale_color_val(val: f64) -> i16 {
-    let x = val * 255 as f64;
+    let x: f64 = val * 255.0;
 
     if x >= 255.0 {
         255
@@ -87,13 +87,13 @@ fn scale_color_val(val: f64) -> i16 {
 
 impl Color {
     pub fn red(&self) -> f64 {
-        return self.components.x;
+        self.components.x
     }
     pub fn green(&self) -> f64 {
-        return self.components.y;
+        self.components.y
     }
     pub fn blue(&self) -> f64 {
-        return self.components.z;
+        self.components.z
     }
 }
 

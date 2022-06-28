@@ -33,8 +33,8 @@ impl Canvas {
     pub fn to_ppm(&self, filename: &str) -> std::io::Result<()> {
         let path = Path::new(filename);
         let mut file = File::create(&path)?;
-        file.write(self.get_ppm_header().as_bytes())?;
-        file.write(self.get_ppm_pixel_data().as_bytes())?;
+        let _ = file.write(self.get_ppm_header().as_bytes())?;
+        let _ = file.write(self.get_ppm_pixel_data().as_bytes())?;
         Ok(())
     }
 
@@ -54,16 +54,16 @@ impl Canvas {
                 pixel_data.push_str(format_string.as_ref());
                 curr_line_len += format_string.len();
                 if curr_line_len + max_pixel_length > max_ppm_line {
-                    pixel_data.push_str("\n");
+                    pixel_data.push('\n');
                     curr_line_len = 0;
                 } else if x != self.width - 1 {
-                    pixel_data.push_str(" ")
+                    pixel_data.push(' ')
                 }
             }
             if y != self.height - 1 {
-                pixel_data.push_str(" ");
+                pixel_data.push(' ');
             } else {
-                pixel_data.push_str("\n");
+                pixel_data.push('\n');
             }
         }
         pixel_data
@@ -73,7 +73,6 @@ impl Canvas {
 pub fn new_canvas(width: usize, height: usize) -> Canvas {
     let default = new_color(0.0, 0.0, 0.0);
     let pixels = vec![vec![default; width]; height];
-
     Canvas {
         height,
         width,
@@ -95,11 +94,7 @@ mod tests {
         for y in 0..height {
             for x in 0..width {
                 match test_canvas.get_pixel(x, y) {
-                    None => assert!(
-                        false,
-                        "get_pixel should have returned a color x: {} y: {}",
-                        x, y
-                    ),
+                    None => panic!("get_pixel should have returned a color x: {} y: {}", x, y),
                     Some(pixel_color) => assert_eq!(expected, pixel_color),
                 }
             }
@@ -113,10 +108,10 @@ mod tests {
         let mut test_canvas = new_canvas(width, height);
         let expected = new_color(1.0, 0.0, 0.0);
         let written = test_canvas.write_pixel(2, 3, expected);
-        assert_eq!(true, written);
+        assert!(written);
         match test_canvas.get_pixel(2, 3) {
             Some(color) => assert_eq!(expected, color),
-            None => assert!(false, "get_pixel should not have returned an error"),
+            None => panic!("get_pixel should not have returned an error"),
         }
     }
 

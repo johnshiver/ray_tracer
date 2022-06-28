@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn intersection_encapsulates_t_object() {
         let s = new_sphere();
-        let i = new_intersection(3.5, s.clone());
+        let i = new_intersection(3.5, s);
         assert_eq!(i.t, 3.5);
         assert_eq!(i.object, s);
     }
@@ -229,8 +229,8 @@ mod tests {
     #[test]
     fn aggregating_intersections() {
         let s = new_sphere();
-        let i1 = new_intersection(1.0, s.clone());
-        let i2 = new_intersection(2.0, s.clone());
+        let i1 = new_intersection(1.0, s);
+        let i2 = new_intersection(2.0, s);
 
         let xs = intersections(vec![i1, i2], 2);
         assert_eq!(xs[0].t, 1.0);
@@ -241,8 +241,8 @@ mod tests {
     #[test]
     fn hit_all_intersections_positive() {
         let s = new_sphere();
-        let i1 = new_intersection(1.0, s.clone());
-        let i2 = new_intersection(2.0, s.clone());
+        let i1 = new_intersection(1.0, s);
+        let i2 = new_intersection(2.0, s);
 
         let xs = intersections(vec![i1, i2], 2);
         let i = hit(xs).unwrap();
