@@ -1,10 +1,11 @@
-use crate::tuple::Tuple;
 use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt;
 use std::ops::{Index, Mul};
 
-const EPSILON: f64 = 0.00001;
+use crate::tuple::Tuple;
+use crate::utils::equal_f64;
+
 pub const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
     matrix: [
         [1.0, 0.0, 0.0, 0.0],
@@ -13,14 +14,6 @@ pub const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
         [0.0, 0.0, 0.0, 1.0],
     ],
 };
-
-fn equal_f64(a: f64, b: f64) -> bool {
-    let diff = a - b;
-    if num::abs(diff) < EPSILON {
-        return true;
-    }
-    false
-}
 
 struct MatrixIndex {
     x: usize,
@@ -164,10 +157,7 @@ pub fn determinant_4x4(matrix: &M4x4) -> f64 {
 }
 
 pub fn invertible_4x4(matrix: &M4x4) -> bool {
-    if determinant_4x4(matrix.borrow()) == 0.0 {
-        return false;
-    }
-    true
+    determinant_4x4(&matrix) != 0.0
 }
 
 // Errors --------------------------------------------------
@@ -342,13 +332,14 @@ pub fn determinant_2x2(m: &M2x2) -> f64 {
 
 #[cfg(test)]
 mod tests {
+    use std::borrow::Borrow;
+
     use crate::matrix::{
-        cofactor_3x3, cofactor_4x4, determinant_2x2, determinant_3x3, determinant_4x4, invert_4x4,
-        invertible_4x4, minor_3x3, new_2x2, new_3x3, new_4x4, submatrix_3x3, submatrix_4x4,
-        transpose, MatrixIndex, IDENTITY_MATRIX_4X4,
+        cofactor_3x3, cofactor_4x4, determinant_2x2, determinant_3x3, determinant_4x4, IDENTITY_MATRIX_4X4,
+        invert_4x4, invertible_4x4, MatrixIndex, minor_3x3, new_2x2, new_3x3, new_4x4,
+        submatrix_3x3, submatrix_4x4, transpose,
     };
     use crate::tuple::{new_point, Tuple};
-    use std::borrow::Borrow;
 
     #[test]
     fn create_4x4_matrix() {
