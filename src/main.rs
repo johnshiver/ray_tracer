@@ -19,27 +19,27 @@ mod utils;
 
 fn main() {
     analog_clock();
-    // create_test_image();
+    create_test_image();
     simulate_projectile();
 }
 
-// fn create_test_image() {
-//     let width = 500;
-//     let height = 500;
-//     let mut canvas = new_canvas(width, height);
-//     let red = new_color(1.0, 0.0, 0.0);
-//     let blue = new_color(0.0, 0.0, 1.0);
-//     for x in 0..width {
-//         canvas.write_pixel(x, 0, red);
-//         canvas.write_pixel(x, 1, red);
-//         canvas.write_pixel(x, 2, red);
-//     }
-//     for y in 1..height {
-//         canvas.write_pixel(0, y, blue);
-//     }
-//     canvas.to_ppm("test_ppm.ppm").expect("while creating ppm");
-// }
-//
+fn create_test_image() {
+    let width = 500;
+    let height = 500;
+    let mut canvas = new_canvas(width, height);
+    let red = new_color(1.0, 0.0, 0.0);
+    let blue = new_color(0.0, 0.0, 1.0);
+    for x in 0..width {
+        canvas.write_pixel(x, 0, red);
+        canvas.write_pixel(x, 1, red);
+        canvas.write_pixel(x, 2, red);
+    }
+    for y in 1..height {
+        canvas.write_pixel(0, y, blue);
+    }
+    canvas.to_ppm("test_ppm.ppm").expect("while creating ppm");
+}
+
 fn simulate_projectile() {
     let start = new_point(0.0, 1.0, 0.0);
     let velocity = new_vector(1.0, 1.8, 0.0) * 11.25;
