@@ -1,4 +1,4 @@
-use crate::matrix::{new_4x4, M4x4, IDENTITY_MATRIX_4X4};
+use crate::matrix::{M4x4, IDENTITY_MATRIX_4X4};
 
 // moves a point
 pub fn translation(x: f64, y: f64, z: f64) -> M4x4 {
@@ -6,7 +6,7 @@ pub fn translation(x: f64, y: f64, z: f64) -> M4x4 {
     base_matrix.matrix[0][3] = x;
     base_matrix.matrix[1][3] = y;
     base_matrix.matrix[2][3] = z;
-    new_4x4(base_matrix.matrix)
+    M4x4::from(base_matrix.matrix)
 }
 
 pub fn scaling(x: f64, y: f64, z: f64) -> M4x4 {
@@ -14,7 +14,7 @@ pub fn scaling(x: f64, y: f64, z: f64) -> M4x4 {
     base_matrix.matrix[0][0] = x;
     base_matrix.matrix[1][1] = y;
     base_matrix.matrix[2][2] = z;
-    new_4x4(base_matrix.matrix)
+    M4x4::from(base_matrix.matrix)
 }
 
 pub fn rotation_x(radians: f64) -> M4x4 {
@@ -23,7 +23,7 @@ pub fn rotation_x(radians: f64) -> M4x4 {
     base_matrix.matrix[1][2] = -radians.sin();
     base_matrix.matrix[2][1] = radians.sin();
     base_matrix.matrix[2][2] = radians.cos();
-    new_4x4(base_matrix.matrix)
+    M4x4::from(base_matrix.matrix)
 }
 
 pub fn rotation_y(radians: f64) -> M4x4 {
@@ -32,7 +32,7 @@ pub fn rotation_y(radians: f64) -> M4x4 {
     base_matrix.matrix[0][2] = radians.sin();
     base_matrix.matrix[2][0] = -radians.sin();
     base_matrix.matrix[2][2] = radians.cos();
-    new_4x4(base_matrix.matrix)
+    M4x4::from(base_matrix.matrix)
 }
 
 fn rotation_z(radians: f64) -> M4x4 {
@@ -41,7 +41,7 @@ fn rotation_z(radians: f64) -> M4x4 {
     base_matrix.matrix[0][1] = -radians.sin();
     base_matrix.matrix[1][0] = radians.sin();
     base_matrix.matrix[1][1] = radians.cos();
-    new_4x4(base_matrix.matrix)
+    M4x4::from(base_matrix.matrix)
 }
 
 fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
@@ -52,8 +52,7 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
     base_matrix.matrix[1][2] = yz;
     base_matrix.matrix[2][0] = zx;
     base_matrix.matrix[2][1] = zy;
-
-    new_4x4(base_matrix.matrix)
+    M4x4::from(base_matrix.matrix)
 }
 
 #[cfg(test)]

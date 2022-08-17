@@ -26,6 +26,12 @@ pub struct M4x4 {
     pub matrix: [[f64; 4]; 4],
 }
 
+impl From<[[f64; 4]; 4]> for M4x4 {
+    fn from(matrix: [[f64; 4]; 4]) -> Self {
+        M4x4 { matrix }
+    }
+}
+
 impl Index<&MatrixIndex> for M4x4 {
     type Output = f64;
 
@@ -63,7 +69,7 @@ impl Mul<M4x4> for M4x4 {
                 new_matrix[y][x] = cal_index_matrix_multi(&self.matrix, &other.matrix, x, y);
             }
         }
-        new_4x4(new_matrix)
+        M4x4::from(new_matrix)
     }
 }
 
@@ -100,10 +106,6 @@ fn cal_index_tuple_multi(m1: &[[f64; 4]; 4], t: Tuple, r: usize) -> f64 {
     t.x * row[0] + t.y * row[1] + t.z * row[2] + t.w * row[3]
 }
 
-pub fn new_4x4(matrix: [[f64; 4]; 4]) -> M4x4 {
-    M4x4 { matrix }
-}
-
 pub fn transpose(m: M4x4) -> M4x4 {
     let mut tx_m = [[0.0; 4]; 4];
     for y in 0..4 {
@@ -111,7 +113,7 @@ pub fn transpose(m: M4x4) -> M4x4 {
             tx_m[x][y] = m.matrix[y][x];
         }
     }
-    new_4x4(tx_m)
+    M4x4::from(tx_m)
 }
 
 pub fn submatrix_4x4(matrix: &M4x4, row: usize, col: usize) -> M3x3 {
@@ -157,7 +159,7 @@ pub fn determinant_4x4(matrix: &M4x4) -> f64 {
 }
 
 pub fn invertible_4x4(matrix: &M4x4) -> bool {
-    determinant_4x4(&matrix) != 0.0
+    determinant_4x4(matrix) != 0.0
 }
 
 // Errors --------------------------------------------------
@@ -205,7 +207,7 @@ pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixTransformationError> {
             cofactors[x][y] = c / det;
         }
     }
-    Ok(new_4x4(cofactors))
+    Ok(M4x4::from(cofactors))
 }
 // ----------------------------- 3x3 ------------------------------------
 
@@ -336,7 +338,7 @@ mod tests {
 
     use crate::matrix::{
         cofactor_3x3, cofactor_4x4, determinant_2x2, determinant_3x3, determinant_4x4, invert_4x4,
-        invertible_4x4, minor_3x3, new_2x2, new_4x4, submatrix_3x3, submatrix_4x4, transpose, M3x3,
+        invertible_4x4, minor_3x3, new_2x2, submatrix_3x3, submatrix_4x4, transpose, M3x3, M4x4,
         MatrixIndex, IDENTITY_MATRIX_4X4,
     };
     use crate::tuple::{new_point, Tuple};
@@ -349,7 +351,7 @@ mod tests {
             [9.0, 10.0, 11.0, 12.0],
             [13.5, 14.5, 15.5, 16.5],
         ];
-        let test_m4x4 = new_4x4(test_matrix);
+        let test_m4x4 = M4x4::from(test_matrix);
         assert_eq!(test_m4x4[&MatrixIndex { x: 0, y: 0 }], 1.0);
         assert_eq!(test_m4x4[&MatrixIndex { x: 3, y: 0 }], 4.0);
         assert_eq!(test_m4x4[&MatrixIndex { x: 0, y: 1 }], 5.5);
@@ -361,71 +363,68 @@ mod tests {
 
     #[test]
     fn compare_4x4_matrices() {
-        let m1 = [
+        let m1 = M4x4::from([
             [1.0, 2.0, 3.0, 4.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
             [13.5, 14.5, 15.5, 16.5],
-        ];
-        let m2 = [
+        ]);
+        let m2 = M4x4::from([
             [1.0, 2.0, 3.0, 4.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
             [13.5, 14.5, 15.5, 16.5],
-        ];
-        assert_eq!(new_4x4(m1), new_4x4(m2));
+        ]);
+        assert_eq!(m1, m2);
 
-        let m3 = [
+        let m3 = M4x4::from([
             [1.0, 2.0, 3.0, 4.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
             [13.5, 14.5, 15.5, 16.5],
-        ];
-        let m4 = [
+        ]);
+        let m4 = M4x4::from([
             [2.0, 3.0, 3.0, 5.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
             [13.5, 14.5, 15.5, 16.5],
-        ];
+        ]);
 
-        assert_ne!(new_4x4(m3), new_4x4(m4));
+        assert_ne!(m3, m4);
     }
 
     #[test]
     fn multiply_4x4_matrices() {
-        let m1 = [
+        let m1 = M4x4::from([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 8.0, 7.0, 6.0],
             [5.0, 4.0, 3.0, 2.0],
-        ];
-        let m2 = [
+        ]);
+        let m2 = M4x4::from([
             [-2.0, 1.0, 2.0, 3.0],
             [3.0, 2.0, 1.0, -1.0],
             [4.0, 3.0, 6.0, 5.0],
             [1.0, 2.0, 7.0, 8.0],
-        ];
-        let expected = [
+        ]);
+        let expected = M4x4::from([
             [20.0, 22.0, 50.0, 48.0],
             [44.0, 54.0, 114.0, 108.0],
             [40.0, 58.0, 110.0, 102.0],
             [16.0, 26.0, 46.0, 42.0],
-        ];
+        ]);
 
-        let test_m1 = new_4x4(m1);
-        let test_m2 = new_4x4(m2);
-        let test_expected = new_4x4(expected);
-        assert_eq!(test_m1 * test_m2, test_expected);
+        assert_eq!(m1 * m2, expected);
     }
 
     #[test]
     fn multiply_4x4_matrix_tuple() {
-        let m1 = [
+        let m1 = M4x4::from([
             [1.0, 2.0, 3.0, 4.0],
             [2.0, 4.0, 4.0, 2.0],
             [8.0, 6.0, 4.0, 1.0],
             [0.0, 0.0, 0.0, 1.0],
-        ];
+        ]);
         let t1 = new_point(1.0, 2.0, 3.0);
         let expected = Tuple {
             x: 18.0,
@@ -434,29 +433,25 @@ mod tests {
             w: 1.0,
         };
 
-        let test_m1 = new_4x4(m1);
-        assert_eq!(test_m1 * t1, expected);
+        assert_eq!(m1 * t1, expected);
     }
 
     #[test]
     fn transpose_4x4_matrix() {
-        let m1 = [
+        let m1 = M4x4::from([
             [0.0, 9.0, 3.0, 0.0],
             [9.0, 8.0, 0.0, 8.0],
             [1.0, 8.0, 5.0, 3.0],
             [0.0, 0.0, 5.0, 8.0],
-        ];
-        let expected = [
+        ]);
+        let expected = M4x4::from([
             [0.0, 9.0, 1.0, 0.0],
             [9.0, 8.0, 8.0, 0.0],
             [3.0, 0.0, 5.0, 5.0],
             [0.0, 8.0, 3.0, 8.0],
-        ];
+        ]);
 
-        let test_m1 = new_4x4(m1);
-        let test_expected = new_4x4(expected);
-        assert_eq!(transpose(test_m1), test_expected);
-
+        assert_eq!(transpose(m1), expected);
         assert_eq!(transpose(IDENTITY_MATRIX_4X4), IDENTITY_MATRIX_4X4);
     }
 
@@ -510,14 +505,13 @@ mod tests {
 
     #[test]
     fn identity_matrix_multi_matrix() {
-        let m1 = [
+        let m1 = M4x4::from([
             [0.0, 1.0, 2.0, 4.0],
             [1.0, 2.0, 4.0, 8.0],
             [2.0, 4.0, 8.0, 16.0],
             [4.0, 8.0, 16.0, 32.0],
-        ];
-        let expected = new_4x4(m1);
-        assert_eq!(expected * IDENTITY_MATRIX_4X4, expected)
+        ]);
+        assert_eq!(m1 * IDENTITY_MATRIX_4X4, m1)
     }
 
     #[test]
@@ -540,7 +534,7 @@ mod tests {
 
     #[test]
     fn submatrix_4x4_3x3() {
-        let test_m3 = new_4x4([
+        let test_m3 = M4x4::from([
             [-6.0, 1.0, 1.0, 6.0],
             [-8.0, 5.0, 8.0, 6.0],
             [-1.0, 0.0, 8.0, 2.0],
@@ -571,18 +565,18 @@ mod tests {
 
     #[test]
     fn determinant_4x4_test() {
-        let a = new_4x4([
+        let a = M4x4::from([
             [-2.0, -8.0, 3.0, 5.0],
             [-3.0, 1.0, 7.0, 3.0],
             [1.0, 2.0, -9.0, 6.0],
             [-6.0, 7.0, 7.0, -9.0],
         ]);
-        assert_eq!(determinant_4x4(a.borrow()), -4071.0);
+        assert_eq!(determinant_4x4(&a), -4071.0);
     }
 
     #[test]
     fn matrix_invertibility() {
-        let a = new_4x4([
+        let a = M4x4::from([
             [6.0, 4.0, 4.0, 4.0],
             [5.0, 5.0, 7.0, 6.0],
             [4.0, -9.0, 3.0, -7.0],
@@ -591,7 +585,7 @@ mod tests {
         assert_eq!(determinant_4x4(&a), -2120.0);
         assert!(invertible_4x4(&a));
 
-        let a = new_4x4([
+        let a = M4x4::from([
             [-4.0, 2.0, -2.0, -3.0],
             [9.0, 6.0, 2.0, 6.0],
             [0.0, -5.0, 1.0, -5.0],
@@ -603,7 +597,7 @@ mod tests {
 
     #[test]
     fn matrix_inverse() {
-        let a = new_4x4([
+        let a = M4x4::from([
             [-5.0, 2.0, 6.0, -8.0],
             [1.0, -5.0, 1.0, 8.0],
             [7.0, 7.0, -6.0, -7.0],
@@ -614,7 +608,7 @@ mod tests {
         assert_eq!(cofactor_4x4(&a, 3, 2), 105.0);
 
         let b = invert_4x4(a.borrow()).unwrap();
-        let expected = new_4x4([
+        let expected = M4x4::from([
             [0.21805, 0.45113, 0.24060, -0.04511],
             [-0.80827, -1.45677, -0.44361, 0.52068],
             [-0.07895, -0.22368, -0.05263, 0.19737],
@@ -622,14 +616,14 @@ mod tests {
         ]);
         assert_eq!(b, expected);
 
-        let c = new_4x4([
+        let c = M4x4::from([
             [8.0, -5.0, 9.0, 2.0],
             [7.0, 5.0, 6.0, 1.0],
             [-6.0, 0.0, 9.0, 6.0],
             [-3.0, 0.0, -9.0, -4.0],
         ]);
-        let d = invert_4x4(c.borrow()).unwrap();
-        let e2 = new_4x4([
+        let d = invert_4x4(&c).unwrap();
+        let e2 = M4x4::from([
             [-0.15385, -0.15385, -0.28205, -0.53846],
             [-0.07692, 0.12308, 0.02564, 0.03077],
             [0.35897, 0.35897, 0.43590, 0.92308],
@@ -637,14 +631,14 @@ mod tests {
         ]);
         assert_eq!(d, e2);
 
-        let e = new_4x4([
+        let e = M4x4::from([
             [9.0, 3.0, 0.0, 9.0],
             [-5.0, -2.0, -6.0, -3.0],
             [-4.0, 9.0, 6.0, 4.0],
             [-7.0, 6.0, 6.0, 2.0],
         ]);
-        let f = invert_4x4(e.borrow()).unwrap();
-        let e3 = new_4x4([
+        let f = invert_4x4(&e).unwrap();
+        let e3 = M4x4::from([
             [-0.04074, -0.07778, 0.14444, -0.22222],
             [-0.07778, 0.03333, 0.36667, -0.33333],
             [-0.02901, -0.14630, -0.10926, 0.12963],
@@ -655,20 +649,20 @@ mod tests {
 
     #[test]
     fn matrix_product_by_its_inverse() {
-        let a = new_4x4([
+        let a = M4x4::from([
             [3.0, -9.0, 7.0, 3.0],
             [3.0, -8.0, 2.0, -9.0],
             [-4.0, 4.0, 4.0, 1.0],
             [-6.0, 5.0, -1.0, 1.0],
         ]);
 
-        let b = new_4x4([
+        let b = M4x4::from([
             [8.0, 2.0, 2.0, 2.0],
             [3.0, -1.0, 7.0, 0.0],
             [7.0, 0.0, 5.0, 4.0],
             [6.0, -2.0, 0.0, 5.0],
         ]);
         let c = a * b;
-        assert_eq!(a, c * invert_4x4(b.borrow()).unwrap());
+        assert_eq!(a, c * invert_4x4(&b).unwrap());
     }
 }
