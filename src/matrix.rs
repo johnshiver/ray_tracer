@@ -133,7 +133,7 @@ pub fn submatrix_4x4(matrix: &M4x4, row: usize, col: usize) -> M3x3 {
         write_x = 0;
         write_y += 1;
     }
-    new_3x3(new_m)
+    M3x3::from(new_m)
 }
 
 pub fn minor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
@@ -162,41 +162,39 @@ pub fn invertible_4x4(matrix: &M4x4) -> bool {
 
 // Errors --------------------------------------------------
 #[derive(Debug)]
-pub struct MatrixNotInvertibleError {
+pub struct MatrixTransformationError {
     details: String,
 }
 
-impl MatrixNotInvertibleError {
-    fn new(msg: &str) -> MatrixNotInvertibleError {
-        MatrixNotInvertibleError {
+impl MatrixTransformationError {
+    fn new(msg: &str) -> MatrixTransformationError {
+        MatrixTransformationError {
             details: msg.to_string(),
         }
     }
 }
 
-impl fmt::Display for MatrixNotInvertibleError {
+impl fmt::Display for MatrixTransformationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.details)
     }
 }
 
-impl Error for MatrixNotInvertibleError {
+impl Error for MatrixTransformationError {
     fn description(&self) -> &str {
         &self.details
     }
 }
 
-impl PartialEq for MatrixNotInvertibleError {
+impl PartialEq for MatrixTransformationError {
     fn eq(&self, other: &Self) -> bool {
         self.details == other.details
     }
 }
 
-pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixNotInvertibleError> {
+pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixTransformationError> {
     if !invertible_4x4(matrix.borrow()) {
-        return Err(MatrixNotInvertibleError::new(
-            "invert_4x4: matrix not invertible",
-        ));
+        return Err(MatrixTransformationError::new("matrix not invertible"));
     }
     let mut cofactors = [[0.0; 4]; 4];
     let det = determinant_4x4(matrix.borrow());
@@ -243,8 +241,10 @@ impl PartialEq for M3x3 {
     }
 }
 
-pub fn new_3x3(matrix: [[f64; 3]; 3]) -> M3x3 {
-    M3x3 { matrix }
+impl From<[[f64; 3]; 3]> for M3x3 {
+    fn from(matrix: [[f64; 3]; 3]) -> Self {
+        M3x3 { matrix }
+    }
 }
 
 pub fn submatrix_3x3(matrix: &M3x3, row: usize, col: usize) -> M2x2 {
@@ -335,9 +335,9 @@ mod tests {
     use std::borrow::Borrow;
 
     use crate::matrix::{
-        cofactor_3x3, cofactor_4x4, determinant_2x2, determinant_3x3, determinant_4x4, IDENTITY_MATRIX_4X4,
-        invert_4x4, invertible_4x4, MatrixIndex, minor_3x3, new_2x2, new_3x3, new_4x4,
-        submatrix_3x3, submatrix_4x4, transpose,
+        cofactor_3x3, cofactor_4x4, determinant_2x2, determinant_3x3, determinant_4x4, invert_4x4,
+        invertible_4x4, minor_3x3, new_2x2, new_3x3, new_4x4, submatrix_3x3, submatrix_4x4,
+        transpose, MatrixIndex, IDENTITY_MATRIX_4X4,
     };
     use crate::tuple::{new_point, Tuple};
 
