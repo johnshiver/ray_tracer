@@ -268,7 +268,7 @@ pub fn submatrix_3x3(matrix: &M3x3, row: usize, col: usize) -> M2x2 {
         write_x = 0;
         write_y += 1;
     }
-    new_2x2(new_m)
+    M2x2::from(new_m)
 }
 
 pub fn minor_3x3(matrix: &M3x3, row: usize, col: usize) -> f64 {
@@ -295,6 +295,12 @@ pub fn determinant_3x3(matrix: &M3x3) -> f64 {
 #[derive(Debug)]
 pub struct M2x2 {
     matrix: [[f64; 2]; 2],
+}
+
+impl From<[[f64; 2]; 2]> for M2x2 {
+    fn from(matrix: [[f64; 2]; 2]) -> Self {
+        M2x2 { matrix }
+    }
 }
 
 impl Index<&MatrixIndex> for M2x2 {
@@ -324,10 +330,6 @@ impl PartialEq for M2x2 {
     }
 }
 
-pub fn new_2x2(matrix: [[f64; 2]; 2]) -> M2x2 {
-    M2x2 { matrix }
-}
-
 pub fn determinant_2x2(m: &M2x2) -> f64 {
     (m.matrix[0][0] * m.matrix[1][1]) - (m.matrix[0][1] * m.matrix[1][0])
 }
@@ -338,7 +340,7 @@ mod tests {
 
     use crate::matrix::{
         cofactor_3x3, cofactor_4x4, determinant_2x2, determinant_3x3, determinant_4x4, invert_4x4,
-        invertible_4x4, minor_3x3, new_2x2, submatrix_3x3, submatrix_4x4, transpose, M3x3, M4x4,
+        invertible_4x4, minor_3x3, submatrix_3x3, submatrix_4x4, transpose, M2x2, M3x3, M4x4,
         MatrixIndex, IDENTITY_MATRIX_4X4,
     };
     use crate::tuple::{new_point, Tuple};
@@ -478,29 +480,28 @@ mod tests {
 
     #[test]
     fn create_2x2_matrix() {
-        let test_matrix = [[-3.0, 5.0], [1.0, -2.0]];
-        let test_m2x2 = new_2x2(test_matrix);
-        assert_eq!(test_m2x2[&MatrixIndex { x: 0, y: 0 }], -3.0);
-        assert_eq!(test_m2x2[&MatrixIndex { x: 1, y: 0 }], 5.0);
-        assert_eq!(test_m2x2[&MatrixIndex { x: 0, y: 1 }], 1.0);
-        assert_eq!(test_m2x2[&MatrixIndex { x: 1, y: 1 }], -2.0);
+        let m = M2x2::from([[-3.0, 5.0], [1.0, -2.0]]);
+        assert_eq!(m[&MatrixIndex { x: 0, y: 0 }], -3.0);
+        assert_eq!(m[&MatrixIndex { x: 1, y: 0 }], 5.0);
+        assert_eq!(m[&MatrixIndex { x: 0, y: 1 }], 1.0);
+        assert_eq!(m[&MatrixIndex { x: 1, y: 1 }], -2.0);
     }
 
     #[test]
     fn compare_2x2_matrices() {
-        let m1 = [[1.0, 2.0], [5.5, 6.5]];
-        let m2 = [[1.0, 2.0], [5.5, 6.5]];
-        assert_eq!(new_2x2(m1), new_2x2(m2));
+        let m1 = M2x2::from([[1.0, 2.0], [5.5, 6.5]]);
+        let m2 = M2x2::from([[1.0, 2.0], [5.5, 6.5]]);
+        assert_eq!(m1, m2);
 
-        let m3 = [[1.0, 2.0], [5.5, 6.5]];
-        let m4 = [[2.0, 3.0], [5.5, 6.5]];
-        assert_ne!(new_2x2(m3), new_2x2(m4));
+        let m3 = M2x2::from([[1.0, 2.0], [5.5, 6.5]]);
+        let m4 = M2x2::from([[2.0, 3.0], [5.5, 6.5]]);
+        assert_ne!(m3, m4);
     }
 
     #[test]
     fn determinant_2x2_matrices() {
-        let m1 = [[1.0, 5.0], [-3.0, 2.0]];
-        assert_eq!(determinant_2x2(&new_2x2(m1)), 17.0);
+        let m1 = M2x2::from([[1.0, 5.0], [-3.0, 2.0]]);
+        assert_eq!(determinant_2x2(&m1), 17.0);
     }
 
     #[test]
@@ -528,7 +529,7 @@ mod tests {
     #[test]
     fn submatrix_3x3_2x2() {
         let test_m3 = M3x3::from([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]]);
-        let expected = new_2x2([[-3.0, 2.0], [0.0, 6.0]]);
+        let expected = M2x2::from([[-3.0, 2.0], [0.0, 6.0]]);
         assert_eq!(submatrix_3x3(&test_m3, 0, 2), expected);
     }
 
