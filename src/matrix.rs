@@ -336,8 +336,8 @@ mod tests {
 
     use crate::matrix::{
         cofactor_3x3, cofactor_4x4, determinant_2x2, determinant_3x3, determinant_4x4, invert_4x4,
-        invertible_4x4, minor_3x3, new_2x2, new_3x3, new_4x4, submatrix_3x3, submatrix_4x4,
-        transpose, MatrixIndex, IDENTITY_MATRIX_4X4,
+        invertible_4x4, minor_3x3, new_2x2, new_4x4, submatrix_3x3, submatrix_4x4, transpose, M3x3,
+        MatrixIndex, IDENTITY_MATRIX_4X4,
     };
     use crate::tuple::{new_point, Tuple};
 
@@ -463,7 +463,7 @@ mod tests {
     #[test]
     fn create_3x3_matrix() {
         let test_matrix = [[-3.0, 5.0, 0.0], [1.0, -2.0, -7.0], [0.0, 1.0, 1.0]];
-        let test_m3x3 = new_3x3(test_matrix);
+        let test_m3x3 = M3x3::from(test_matrix);
         assert_eq!(test_m3x3[&MatrixIndex { x: 0, y: 0 }], -3.0);
         assert_eq!(test_m3x3[&MatrixIndex { x: 1, y: 1 }], -2.0);
         assert_eq!(test_m3x3[&MatrixIndex { x: 2, y: 2 }], 1.0);
@@ -472,13 +472,13 @@ mod tests {
 
     #[test]
     fn compare_3x3_matrices() {
-        let m1 = [[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]];
-        let m2 = [[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]];
-        assert_eq!(new_3x3(m1), new_3x3(m2));
+        let m1 = M3x3::from([[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]]);
+        let m2 = M3x3::from([[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]]);
+        assert_eq!(m1, m2);
 
-        let m3 = [[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]];
-        let m4 = [[2.0, 3.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]];
-        assert_ne!(new_3x3(m3), new_3x3(m4));
+        let m3 = M3x3::from([[1.0, 2.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]]);
+        let m4 = M3x3::from([[2.0, 3.0, 3.0], [5.5, 6.5, 7.5], [9.0, 10.0, 11.0]]);
+        assert_ne!(m3, m4);
     }
 
     #[test]
@@ -533,9 +533,9 @@ mod tests {
 
     #[test]
     fn submatrix_3x3_2x2() {
-        let test_m3 = new_3x3([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]]);
+        let test_m3 = M3x3::from([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]]);
         let expected = new_2x2([[-3.0, 2.0], [0.0, 6.0]]);
-        assert_eq!(submatrix_3x3(test_m3.borrow(), 0, 2), expected);
+        assert_eq!(submatrix_3x3(&test_m3, 0, 2), expected);
     }
 
     #[test]
@@ -546,27 +546,27 @@ mod tests {
             [-1.0, 0.0, 8.0, 2.0],
             [-7.0, 1.0, -1.0, 1.0],
         ]);
-        let expected = new_3x3([[-6.0, 1.0, 6.0], [-8.0, 8.0, 6.0], [-7.0, -1.0, 1.0]]);
-        assert_eq!(submatrix_4x4(test_m3.borrow(), 2, 1), expected);
+        let expected = M3x3::from([[-6.0, 1.0, 6.0], [-8.0, 8.0, 6.0], [-7.0, -1.0, 1.0]]);
+        assert_eq!(submatrix_4x4(&test_m3, 2, 1), expected);
     }
 
     #[test]
     fn minor_3x3_test() {
-        let a = new_3x3([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
-        assert_eq!(minor_3x3(a.borrow(), 1, 0), 25.0);
+        let a = M3x3::from([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
+        assert_eq!(minor_3x3(&a, 1, 0), 25.0);
     }
 
     #[test]
     fn cofactor_3x3_test() {
-        let a = new_3x3([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
-        assert_eq!(cofactor_3x3(a.borrow(), 0, 0), -12.0);
-        assert_eq!(cofactor_3x3(a.borrow(), 1, 0), -25.0);
+        let a = M3x3::from([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
+        assert_eq!(cofactor_3x3(&a, 0, 0), -12.0);
+        assert_eq!(cofactor_3x3(&a, 1, 0), -25.0);
     }
 
     #[test]
     fn determinant_3x3_test() {
-        let a = new_3x3([[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]]);
-        assert_eq!(determinant_3x3(a.borrow()), -196.0);
+        let a = M3x3::from([[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]]);
+        assert_eq!(determinant_3x3(&a), -196.0);
     }
 
     #[test]
