@@ -18,18 +18,22 @@ pub struct Ray {
     direction: Vector,
 }
 
-pub fn new_ray(origin: Tuple, direction: Tuple) -> Result<Ray, TupleTypeError> {
-    if !origin.is_point() {
-        return Err(TupleTypeError::new("origin: is not a a point"));
+impl Ray {
+    pub fn new(origin: Point, direction: Vector) -> Ray {
+        Ray { origin, direction }
     }
-    if !direction.is_vector() {
-        return Err(TupleTypeError::new("direction: is not a vector"));
-    }
-    Ok(Ray { origin, direction })
-}
 
-pub fn position(r: &Ray, time: f64) -> Tuple {
-    r.origin + r.direction * time
+    pub fn position(&self, time: f64) -> Tuple {
+        self.origin + self.direction * time
+    }
+
+    pub fn discriminant(&self) -> f64 {
+        let sphere_to_ray = self.origin - SPHERE_ORIGIN;
+        let a = dot(&self.direction, &self.direction);
+        let b = 2.0 * dot(&self.direction, &sphere_to_ray);
+        let c = dot(&sphere_to_ray, &sphere_to_ray) - 1.0;
+        b.powf(2.0) - (4.0 * a * c)
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -91,17 +95,10 @@ pub fn intersections(items: Vec<Intersection<Sphere>>, count: i64) -> Intersecti
     Intersections { items, count }
 }
 
-pub fn discriminant(r: &Ray) -> f64 {
-    let sphere_to_ray = r.origin - SPHERE_ORIGIN;
-    let a = dot(&r.direction, &r.direction);
-    let b = 2.0 * dot(&r.direction, &sphere_to_ray);
-    let c = dot(&sphere_to_ray, &sphere_to_ray) - 1.0;
-    b.powf(2.0) - (4.0 * a * c)
-}
 
 // returns set of t values, where ray intersects sphere
 pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
-    let d = discriminant(r);
+    let d = r.discriminant();
     if d < 0.0 {
         return intersections(vec![], 0);
     }
@@ -147,36 +144,32 @@ pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::Borrow;
-
-    use crate::rays::{
-        hit, intersect, intersections, new_intersection, new_ray, new_sphere, position,
-        };
+    use crate::rays::{hit, intersect, intersections, new_intersection, new_sphere, Ray};
     use crate::tuple::{new_point, new_vector};
 
     #[test]
     fn create_ray() {
         let origin = new_point(1.0, 2.0, 3.0);
         let direction = new_vector(4.0, 5.0, 6.0);
-        let r = new_ray(origin, direction).unwrap();
+        let r = Ray::new(origin, direction);
         assert_eq!(r.origin, origin);
         assert_eq!(r.direction, direction);
     }
 
     #[test]
     fn compute_pt_from_distance() {
-        let r = new_ray(new_point(2.0, 3.0, 4.0), new_vector(1.0, 0.0, 0.0)).unwrap();
-        assert_eq!(position(r.borrow(), 0.0), new_point(2.0, 3.0, 4.0));
-        assert_eq!(position(r.borrow(), 1.0), new_point(3.0, 3.0, 4.0));
-        assert_eq!(position(r.borrow(), -1.0), new_point(1.0, 3.0, 4.0));
-        assert_eq!(position(r.borrow(), 2.5), new_point(4.5, 3.0, 4.0));
+        let r = Ray::new(new_point(2.0, 3.0, 4.0), new_vector(1.0, 0.0, 0.0));
+        assert_eq!(r.position(0.0), new_point(2.0, 3.0, 4.0));
+        assert_eq!(r.position(1.0), new_point(3.0, 3.0, 4.0));
+        assert_eq!(r.position(-1.0), new_point(1.0, 3.0, 4.0));
+        assert_eq!(r.position(2.5), new_point(4.5, 3.0, 4.0));
     }
 
     #[test]
     fn ray_intersects_sphere_two_pts() {
-        let r = new_ray(new_point(0.0, 0.0, -5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
+        let r = Ray::new(new_point(0.0, 0.0, -5.0), new_vector(0.0, 0.0, 1.0));
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
+        let xs = intersect(&r, s);
         assert_eq!(xs.count, 2);
         assert_eq!(xs[0].t, 4.0);
         assert_eq!(xs[1].t, 6.0);
@@ -184,9 +177,9 @@ mod tests {
 
     #[test]
     fn ray_intersects_sphere_at_tangent() {
-        let r = new_ray(new_point(0.0, 1.0, -5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
+        let r = Ray::new(new_point(0.0, 1.0, -5.0), new_vector(0.0, 0.0, 1.0));
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
+        let xs = intersect(&r, s);
         assert_eq!(xs.count, 1);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, 5.0);
@@ -195,17 +188,17 @@ mod tests {
 
     #[test]
     fn ray_misses_sphere() {
-        let r = new_ray(new_point(0.0, 2.0, -5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
+        let r = Ray::new(new_point(0.0, 2.0, -5.0), new_vector(0.0, 0.0, 1.0));
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
+        let xs = intersect(&r, s);
         assert_eq!(xs.count, 0);
     }
 
     #[test]
     fn ray_originates_inside_sphere() {
-        let r = new_ray(new_point(0.0, 0.0, 0.0), new_vector(0.0, 0.0, 1.0)).unwrap();
+        let r = Ray::new(new_point(0.0, 0.0, 0.0), new_vector(0.0, 0.0, 1.0));
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
+        let xs = intersect(&r, s);
         assert_eq!(xs.count, 2);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, -1.0);
@@ -214,9 +207,9 @@ mod tests {
 
     #[test]
     fn sphere_is_behind_ray() {
-        let r = new_ray(new_point(0.0, 0.0, 5.0), new_vector(0.0, 0.0, 1.0)).unwrap();
+        let r = Ray::new(new_point(0.0, 0.0, 5.0), new_vector(0.0, 0.0, 1.0));
         let s = new_sphere();
-        let xs = intersect(r.borrow(), s);
+        let xs = intersect(&r, s);
         assert_eq!(xs.count, 2);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, -6.0);
