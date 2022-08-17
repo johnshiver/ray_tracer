@@ -15,8 +15,8 @@ pub struct Tuple {
     pub w: f64,
 }
 
-type Point = Tuple;
-type Vector = Tuple;
+pub type Point = Tuple;
+pub type Vector = Tuple;
 
 
 pub fn new_point(x: f64, y: f64, z: f64) -> Point {
