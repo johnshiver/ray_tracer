@@ -1,7 +1,7 @@
 use std::fmt::{Error, Formatter};
 use std::ops::{Add, Mul, Sub};
 
-use crate::tuple::{new_point, Tuple};
+use crate::tuple::{Point, Tuple};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
@@ -10,7 +10,7 @@ pub struct Color {
 
 pub fn new_color(red: f64, green: f64, blue: f64) -> Color {
     Color {
-        components: new_point(red, green, blue),
+        components: Point::new_point(red, green, blue),
     }
 }
 

@@ -1,6 +1,5 @@
 extern crate num;
 
-use std::error::Error;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -18,32 +17,9 @@ pub struct Tuple {
 pub type Point = Tuple;
 pub type Vector = Tuple;
 
-
-pub fn new_point(x: f64, y: f64, z: f64) -> Point {
-    Point {
-        x,
-        y,
-        z,
-        w: 1.0,
-    }
-}
-
-pub fn new_vector(x: f64, y: f64, z: f64) -> Vector {
-    Vector {
-        x,
-        y,
-        z,
-        w: 0.0,
-    }
-}
-
 impl Display for Tuple {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(
-            f,
-            "x: {} y: {} z: {}",
-            self.x, self.y, self.z
-        )
+        write!(f, "x: {} y: {} z: {}", self.x, self.y, self.z)
     }
 }
 
@@ -134,112 +110,87 @@ impl Tuple {
 }
 
 impl Vector {
-    pub fn is_unit_vector(&self) -> bool {
-        magnitude(self) == 1.0
+    pub fn new(x: f64, y: f64, z: f64) -> Vector {
+        Vector { x, y, z, w: 0.0 }
     }
-}
 
-// Errors --------------------------------------------------
-#[derive(Debug)]
-pub struct TupleTypeError {
-    details: String,
-}
+    pub fn is_unit_vector(&self) -> bool {
+        self.magnitude() == 1.0
+    }
 
-impl TupleTypeError {
-    pub fn new(msg: &str) -> TupleTypeError {
-        TupleTypeError {
-            details: msg.to_string(),
+    pub fn magnitude(&self) -> f64 {
+        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
+    }
+
+    pub fn normalize(&self) -> Vector {
+        let vector_mag = self.magnitude();
+        Vector {
+            x: self.x / vector_mag,
+            y: self.y / vector_mag,
+            z: self.z / vector_mag,
+            w: self.w / vector_mag,
         }
     }
-}
 
-impl Display for TupleTypeError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", self.details)
+    // Performs dot product on two vectors
+    //
+    // The smaller the dot product, the larger the angle between the vectors
+    // A doc product of 1 means the vectors are identical, and a dot product of -1
+    // means they point in opposite directions.
+    //
+    // If the vectors are unit vectors, the dot product is actually the cosine of the angles between them
+    pub fn dot(&self, tb: &Vector) -> f64 {
+        self.x * tb.x + self.y * tb.y + self.z * tb.z + self.w + tb.w
+    }
+
+    // Returns a new vector that is perpendicular to both of the original vectors
+    fn cross(&self, vec_b: &Vector) -> Vector {
+        Vector::new(
+            self.y * vec_b.z - self.z * vec_b.y,
+            self.z * vec_b.x - self.x * vec_b.z,
+            self.x * vec_b.y - self.y * vec_b.x,
+        )
     }
 }
 
-impl Error for TupleTypeError {
-    fn description(&self) -> &str {
-        &self.details
+impl Point {
+    pub fn new_point(x: f64, y: f64, z: f64) -> Point {
+        Point { x, y, z, w: 1.0 }
     }
-}
-
-impl PartialEq for TupleTypeError {
-    fn eq(&self, other: &Self) -> bool {
-        self.details == other.details
-    }
-}
-
-// Functions ------------------------------------------------------------------------
-
-pub fn magnitude(v: &Vector) -> f64 {
-    (v.x.powi(2) + v.y.powi(2) + v.z.powi(2) + v.w.powi(2)).sqrt()
-}
-
-pub fn normalize(vector: &Vector) -> Vector {
-    let vector_mag = magnitude(vector);
-    Vector {
-        x: vector.x / vector_mag,
-        y: vector.y / vector_mag,
-        z: vector.z / vector_mag,
-        w: vector.w / vector_mag,
-    }
-}
-
-// Performs dot product on two vectors
-//
-// The smaller the dot product, the larger the angle between the vectors
-// A doc product of 1 means the vectors are identical, and a dot product of -1
-// means they point in opposite directions.
-//
-// If the vectors are unit vectors, the dot product is actually the cosine of the angles between them
-pub fn dot(ta: &Vector, tb: &Vector) -> f64 {
-    ta.x * tb.x + ta.y * tb.y + ta.z * tb.z + ta.w + tb.w
-}
-
-// Returns a new vector that is perpendicular to both of the original vectors
-fn cross(vec_a: &Vector, vec_b: &Vector) -> Vector {
-    new_vector(
-        vec_a.y * vec_b.z - vec_a.z * vec_b.y,
-        vec_a.z * vec_b.x - vec_a.x * vec_b.z,
-        vec_a.x * vec_b.y - vec_a.y * vec_b.x,
-    )
 }
 
 // Tests --------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
-    use crate::tuple::{cross, dot, magnitude, new_point, new_vector, normalize, Tuple, Vector};
+    use crate::tuple::{Point, Tuple, Vector};
 
     #[test]
     fn new_vector_is_vector() {
-        let x = new_vector(4.3, -4.2, 3.1);
+        let x = Vector::new(4.3, -4.2, 3.1);
         assert_eq!(0.0, x.w);
     }
 
     #[test]
     fn new_point_is_point() {
-        let x = new_point(4.3, -4.2, 3.1);
+        let x = Point::new_point(4.3, -4.2, 3.1);
         assert_eq!(1.0, x.w);
     }
 
     #[test]
     fn tuples_equal() {
-        let x = new_point(4.3, -4.2, 3.1);
-        let y = new_point(4.3, -4.2, 3.1);
+        let x = Point::new_point(4.3, -4.2, 3.1);
+        let y = Point::new_point(4.3, -4.2, 3.1);
         assert_eq!(x, y);
     }
 
     #[test]
     fn tuples_not_equal() {
-        let x = new_point(4.3, -4.2, 3.1);
-        let y = new_vector(4.3, -4.2, 3.1);
+        let x = Point::new_point(4.3, -4.2, 3.1);
+        let y = Vector::new(4.3, -4.2, 3.1);
         assert_ne!(x, y);
 
-        let y = new_point(4.3, -4.2, 3.1);
-        let z = new_point(4.3, -4.2, 3.2);
+        let y = Point::new_point(4.3, -4.2, 3.1);
+        let z = Point::new_point(4.3, -4.2, 3.2);
         assert_ne!(y, z);
     }
 
@@ -271,9 +222,9 @@ mod tests {
 
     #[test]
     fn sub_two_points() {
-        let a = new_point(3.0, 2.0, 1.0);
-        let b = new_point(5.0, 6.0, 7.0);
-        let expected = new_vector(-2.0, -4.0, -6.0);
+        let a = Point::new_point(3.0, 2.0, 1.0);
+        let b = Point::new_point(5.0, 6.0, 7.0);
+        let expected = Vector::new(-2.0, -4.0, -6.0);
 
         let res = a - b;
         assert_eq!(res, expected);
@@ -282,9 +233,9 @@ mod tests {
 
     #[test]
     fn sub_point_vector() {
-        let a = new_point(3.0, 2.0, 1.0);
-        let b = new_vector(5.0, 6.0, 7.0);
-        let expected = new_point(-2.0, -4.0, -6.0);
+        let a = Point::new_point(3.0, 2.0, 1.0);
+        let b = Vector::new(5.0, 6.0, 7.0);
+        let expected = Point::new_point(-2.0, -4.0, -6.0);
 
         let res = a - b;
         assert_eq!(res, expected);
@@ -293,9 +244,9 @@ mod tests {
 
     #[test]
     fn sub_two_vectors() {
-        let a = new_vector(3.0, 2.0, 1.0);
-        let b = new_vector(5.0, 6.0, 7.0);
-        let expected = new_vector(-2.0, -4.0, -6.0);
+        let a = Vector::new(3.0, 2.0, 1.0);
+        let b = Vector::new(5.0, 6.0, 7.0);
+        let expected = Vector::new(-2.0, -4.0, -6.0);
 
         let res = a - b;
         assert_eq!(res, expected);
@@ -360,26 +311,37 @@ mod tests {
             expected: f64,
         }
         let tests = vec![
-            Test { input: new_vector(1.0, 0.0, 0.0), expected: 1.0 },
-            Test { input: new_vector(0.0, 1.0, 0.0), expected: 1.0 },
-            Test { input: new_vector(0.0, 0.0, 1.0), expected: 1.0 },
-            Test { input: new_vector(1.0, 2.0, 3.0), expected: 14.0_f64.sqrt() },
-            Test { input: new_vector(-1.0, -2.0, -3.0), expected: 14.0_f64.sqrt() },
+            Test {
+                input: Vector::new(1.0, 0.0, 0.0),
+                expected: 1.0,
+            },
+            Test {
+                input: Vector::new(0.0, 1.0, 0.0),
+                expected: 1.0,
+            },
+            Test {
+                input: Vector::new(0.0, 0.0, 1.0),
+                expected: 1.0,
+            },
+            Test {
+                input: Vector::new(1.0, 2.0, 3.0),
+                expected: 14.0_f64.sqrt(),
+            },
+            Test {
+                input: Vector::new(-1.0, -2.0, -3.0),
+                expected: 14.0_f64.sqrt(),
+            },
         ];
 
         for t in tests {
-            let res = magnitude(&t.input);
-            assert_eq!(res, t.expected);
+            assert_eq!(t.input.magnitude(), t.expected);
         }
     }
 
-
     #[test]
     fn is_unit_vector_cases() {
-        let a = new_vector(1.0, 0.0, 0.0);
-        let expected = 1.0;
-        let res = magnitude(&a);
-        assert_eq!(res, expected);
+        let a = Vector::new(1.0, 0.0, 0.0);
+        assert_eq!(a.magnitude(), 1.0);
 
         let is_uv_res = a.is_unit_vector();
         assert!(is_uv_res);
@@ -387,39 +349,35 @@ mod tests {
 
     #[test]
     fn normalize_success() {
-        let a = new_vector(4.0, 0.0, 0.0);
-        let expected = new_vector(1.0, 0.0, 0.0);
+        let a = Vector::new(4.0, 0.0, 0.0);
+        let expected = Vector::new(1.0, 0.0, 0.0);
 
-        let normalize_res = normalize(&a);
-        assert_eq!(normalize_res, expected);
+        assert_eq!(a.normalize(), expected);
 
-        let a = new_vector(1.0, 2.0, 3.0);
-        let expected = new_vector(0.26726, 0.53452, 0.80178);
-        let normalize_res = normalize(&a);
-        assert_eq!(normalize_res, expected);
+        let a = Vector::new(1.0, 2.0, 3.0);
+        let expected = Vector::new(0.26726, 0.53452, 0.80178);
+        assert_eq!(a.normalize(), expected);
 
-        let a = new_vector(1.0, 2.0, 3.0);
-        let normalized_vector = normalize(&a);
-        let expected_mag = 1.0;
-        assert_eq!(expected_mag, magnitude(&normalized_vector));
+        let a = Vector::new(1.0, 2.0, 3.0);
+        assert_eq!(1.0, a.normalize().magnitude());
     }
 
     #[test]
     fn dot_product_success() {
-        let vec_a = new_vector(1.0, 2.0, 3.0);
-        let vec_b = new_vector(2.0, 3.0, 4.0);
+        let vec_a = Vector::new(1.0, 2.0, 3.0);
+        let vec_b = Vector::new(2.0, 3.0, 4.0);
         let expected = 20.0;
-        assert_eq!(dot(&vec_a, &vec_b), expected);
+        assert_eq!(vec_a.dot(&vec_b), expected);
     }
 
     #[test]
     fn cross_product_success() {
-        let vec_a = new_vector(1.0, 2.0, 3.0);
-        let vec_b = new_vector(2.0, 3.0, 4.0);
-        let expected_a_b = new_vector(-1.0, 2.0, -1.0);
-        let expected_b_a = new_vector(1.0, -2.0, 1.0);
+        let vec_a = Vector::new(1.0, 2.0, 3.0);
+        let vec_b = Vector::new(2.0, 3.0, 4.0);
+        let expected_a_b = Vector::new(-1.0, 2.0, -1.0);
+        let expected_b_a = Vector::new(1.0, -2.0, 1.0);
 
-        assert_eq!(cross(&vec_a, &vec_b), expected_a_b);
-        assert_eq!(cross(&vec_b, &vec_a), expected_b_a);
+        assert_eq!(vec_a.cross(&vec_b), expected_a_b);
+        assert_eq!(vec_b.cross(&vec_a), expected_b_a);
     }
 }

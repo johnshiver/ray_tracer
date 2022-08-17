@@ -343,7 +343,7 @@ mod tests {
         invertible_4x4, minor_3x3, submatrix_3x3, submatrix_4x4, transpose, M2x2, M3x3, M4x4,
         MatrixIndex, IDENTITY_MATRIX_4X4,
     };
-    use crate::tuple::{new_point, Tuple};
+    use crate::tuple::{Point, Tuple};
 
     #[test]
     fn create_4x4_matrix() {
@@ -427,7 +427,7 @@ mod tests {
             [8.0, 6.0, 4.0, 1.0],
             [0.0, 0.0, 0.0, 1.0],
         ]);
-        let t1 = new_point(1.0, 2.0, 3.0);
+        let t1 = Point::new_point(1.0, 2.0, 3.0);
         let expected = Tuple {
             x: 18.0,
             y: 24.0,
