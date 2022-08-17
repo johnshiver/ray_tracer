@@ -193,14 +193,14 @@ impl PartialEq for MatrixTransformationError {
 }
 
 pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixTransformationError> {
-    if !invertible_4x4(matrix.borrow()) {
+    if !invertible_4x4(matrix) {
         return Err(MatrixTransformationError::new("matrix not invertible"));
     }
     let mut cofactors = [[0.0; 4]; 4];
-    let det = determinant_4x4(matrix.borrow());
+    let det = determinant_4x4(matrix);
     for y in 0..4 {
         for x in 0..4 {
-            let c = cofactor_4x4(matrix.borrow(), y, x);
+            let c = cofactor_4x4(matrix, y, x);
             // sneaky tricky to accomplish transpose operation
             cofactors[x][y] = c / det;
         }
