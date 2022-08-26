@@ -114,14 +114,26 @@ impl Vector {
         Vector { x, y, z, w: 0.0 }
     }
 
+    /// Vectors with magnitude 0 are a `unit vector` and can be useful for certain operations
     pub fn is_unit_vector(&self) -> bool {
         self.magnitude() == 1.0
     }
 
+    /// The distance represented by a vector is called its magnitude, or length.
+    ///
+    /// It’s how far you would travel in a straight line if you were to walk from
+    /// one end of the vector to the other.
     pub fn magnitude(&self) -> f64 {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
     }
 
+    /// Normalization is the process of taking an arbitrary vector and converting it
+    /// into a unit vector.
+    ///
+    /// It will keep your calculations anchored relative to a common scale (the unit vector),
+    /// which is pretty important. If you were to skip normalizing your ray vectors or your
+    /// surface normals, your calculations would be scaled differently for every ray you cast,
+    /// and your scenes would look terrible (if they rendered at all).
     pub fn normalize(&self) -> Vector {
         let vector_mag = self.magnitude();
         Vector {
@@ -132,18 +144,20 @@ impl Vector {
         }
     }
 
-    // Performs dot product on two vectors
-    //
-    // The smaller the dot product, the larger the angle between the vectors
-    // A doc product of 1 means the vectors are identical, and a dot product of -1
-    // means they point in opposite directions.
-    //
-    // If the vectors are unit vectors, the dot product is actually the cosine of the angles between them
+    /// Performs dot product on two vectors
+    ///
+    /// The smaller the dot product, the larger the angle between the vectors
+    /// A doc product of 1 means the vectors are identical, and a dot product of -1
+    /// means they point in opposite directions.
+    ///
+    /// If the vectors are unit vectors, the dot product is actually the cosine of the angles between them
     pub fn dot(&self, tb: &Vector) -> f64 {
         self.x * tb.x + self.y * tb.y + self.z * tb.z + self.w + tb.w
     }
 
-    // Returns a new vector that is perpendicular to both of the original vectors
+    /// Returns a new vector that is perpendicular to both of the original vectors
+    ///
+    /// Order matters for the cross product. X cross Y gives you Z, Y cross X gives -Z
     fn cross(&self, vec_b: &Vector) -> Vector {
         Vector::new(
             self.y * vec_b.z - self.z * vec_b.y,
