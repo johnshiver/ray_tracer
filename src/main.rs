@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
-use crate::canvas::new_canvas;
-use crate::color::new_color;
+use crate::canvas::Canvas;
+use crate::color::Color;
 use crate::environment::new_environment;
 use crate::matrix_transformations::rotation_y;
 use crate::projectile::new_projectile;
@@ -26,9 +26,9 @@ fn main() {
 fn create_test_image() {
     let width = 500;
     let height = 500;
-    let mut canvas = new_canvas(width, height);
-    let red = new_color(1.0, 0.0, 0.0);
-    let blue = new_color(0.0, 0.0, 1.0);
+    let mut canvas = Canvas::new(width, height);
+    let red = Color::new(1.0, 0.0, 0.0);
+    let blue = Color::new(0.0, 0.0, 1.0);
     for x in 0..width {
         canvas.write_pixel(x, 0, red);
         canvas.write_pixel(x, 1, red);
@@ -47,9 +47,9 @@ fn simulate_projectile() {
     let mut p = new_projectile(start, velocity);
     let gravity = Vector::new(0.0, -0.1, 0.0);
     let wind = Vector::new(0.01, 0.0, 0.0);
-    let mut c = new_canvas(900, 550);
+    let mut c = Canvas::new(900, 550);
     let env = new_environment(gravity, wind);
-    let white = new_color(1.0, 1.0, 1.0);
+    let white = Color::new(1.0, 1.0, 1.0);
 
     let alpha = 40.0;
     c.write_pixel(
@@ -76,8 +76,8 @@ fn analog_clock() {
     let width = 100;
     let height = 100;
     let rad = width as f64 * 0.45;
-    let mut c = new_canvas(width, height);
-    let white = new_color(1.0, 1.0, 1.0);
+    let mut c = Canvas::new(width, height);
+    let white = Color::new(1.0, 1.0, 1.0);
 
     let origin = Point::new_point(width as f64 / 2.0_f64, 0.0, height as f64 / 2.0_f64);
     let noon = Point::new_point(0.0, 0.0, 1.0);

@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-use crate::color::{Color, new_color};
+use crate::color::Color;
 
 pub struct Canvas {
     height: usize,
@@ -11,6 +11,15 @@ pub struct Canvas {
 }
 
 impl Canvas {
+    pub fn new(width: usize, height: usize) -> Canvas {
+        let default = Color::new(0.0, 0.0, 0.0);
+        let pixels = vec![vec![default; width]; height];
+        Canvas {
+            height,
+            width,
+            pixels,
+        }
+    }
     pub fn get_pixel(&self, x: usize, y: usize) -> Option<Color> {
         if x < self.width && y < self.height {
             Some(self.pixels[y][x])
@@ -70,27 +79,17 @@ impl Canvas {
     }
 }
 
-pub fn new_canvas(width: usize, height: usize) -> Canvas {
-    let default = new_color(0.0, 0.0, 0.0);
-    let pixels = vec![vec![default; width]; height];
-    Canvas {
-        height,
-        width,
-        pixels,
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::canvas::new_canvas;
-    use crate::color::new_color;
+    use crate::canvas::Canvas;
+    use crate::color::Color;
 
     #[test]
     fn create_canvas() {
         let width = 30;
         let height = 30;
-        let test_canvas = new_canvas(width, height);
-        let expected = new_color(0.0, 0.0, 0.0);
+        let test_canvas = Canvas::new(width, height);
+        let expected = Color::new(0.0, 0.0, 0.0);
         for y in 0..height {
             for x in 0..width {
                 match test_canvas.get_pixel(x, y) {
@@ -105,8 +104,8 @@ mod tests {
     fn write_pixel() {
         let width = 30;
         let height = 30;
-        let mut test_canvas = new_canvas(width, height);
-        let expected = new_color(1.0, 0.0, 0.0);
+        let mut test_canvas = Canvas::new(width, height);
+        let expected = Color::new(1.0, 0.0, 0.0);
         let written = test_canvas.write_pixel(2, 3, expected);
         assert!(written);
         match test_canvas.get_pixel(2, 3) {
@@ -119,7 +118,7 @@ mod tests {
     fn ppm_header() {
         let width = 5;
         let height = 3;
-        let test_canvas = new_canvas(width, height);
+        let test_canvas = Canvas::new(width, height);
         let expected = "P3\n5 3\n255\n";
         assert_eq!(expected, test_canvas.get_ppm_header())
     }
@@ -132,9 +131,9 @@ mod tests {
     //        let width = 5;
     //        let height = 3;
     //        let mut test_canvas = new(width, height);
-    //        let c1 = new_color(1.5, 0.0, 0.0);
-    //        let c2 = new_color(0.0, 0.5, 0.0);
-    //        let c3 = new_color(-0.5, 0.0, 1.0);
+    //        let c1 = Color::new(1.5, 0.0, 0.0);
+    //        let c2 = Color::new(0.0, 0.5, 0.0);
+    //        let c3 = Color::new(-0.5, 0.0, 1.0);
     //        let written = test_canvas.write_pixel(0, 0, c1);
     //        assert_eq!(true, written);
     //        let written = test_canvas.write_pixel(2, 1, c2);
@@ -151,7 +150,7 @@ mod tests {
     //        let width = 10;
     //        let height = 2;
     //        let mut test_canvas = new(width, height);
-    //        let c1 = new_color(1.0, 0.8, 0.6);
+    //        let c1 = Color::new(1.0, 0.8, 0.6);
     //        for x in 0..width {
     //            for y in 0..height {
     //                let written = test_canvas.write_pixel(x, y, c1);
