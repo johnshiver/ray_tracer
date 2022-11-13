@@ -6,6 +6,17 @@ use std::ops::{Index, Mul};
 use crate::tuple::Tuple;
 use crate::utils::equal_f64;
 
+/// You know that you can multiply any number by 1 and get the original number.
+/// The number 1 is called the multiplicative identity for that reason.
+/// The identity matrix is like the number 1, but for matrices.
+/// If you multiply any matrix or tuple by the identity matrix,
+/// you get back the matrix or tuple you started with.
+///
+/// This may sound utterly pointless right now, but consider this:
+/// if multiplying by the identity matrix just returns the original value,
+/// it means you can use it as the default transformation for any object in your scene.
+/// You don’t need any special cases to tell the difference between a
+/// shape with a transformation and a shape without.
 pub const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
     matrix: [
         [1.0, 0.0, 0.0, 0.0],
@@ -62,6 +73,7 @@ impl PartialEq for M4x4 {
 impl Mul<M4x4> for M4x4 {
     type Output = Self;
 
+    /// Matrix multiplication computes the dot product of every row-column combination in the two matrices
     fn mul(self, other: Self) -> Self {
         let mut new_matrix = [[0.0; 4]; 4];
         for y in 0..4 {
@@ -76,6 +88,7 @@ impl Mul<M4x4> for M4x4 {
 impl Mul<Tuple> for M4x4 {
     type Output = Tuple;
 
+    /// Similar to multiplying by another matrix. Treats the tuple as a one column matrix
     fn mul(self, other: Tuple) -> Tuple {
         Tuple {
             x: cal_index_tuple_multi(&self.matrix, other, 0),

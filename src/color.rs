@@ -54,10 +54,16 @@ impl Mul<f64> for Color {
     }
 }
 
-// consider moving this down to tuple, although it may not make sense (not a natural property)
 impl Mul for Color {
     type Output = Self;
 
+    /// Blends two colors together
+    ///
+    /// This method of blending two colors works by multiplying corresponding components
+    /// of each color to form a new color. It’s technically called the Hadamard product (or Schur product),
+    /// but it doesn’t really matter what you call it. It just needs to produce a new color
+    /// where the new red component is the product of the red components of the other colors,
+    /// and so on for blue and green.
     fn mul(self, other: Self) -> Self {
         Color::new(
             self.red() * other.red(),
