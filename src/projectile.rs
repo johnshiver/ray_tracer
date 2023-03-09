@@ -1,9 +1,9 @@
-use crate::tuple::Tuple;
+use crate::tuple::{Point, Tuple, Vector};
 use std::fmt::{Display, Formatter, Result};
 
 pub struct Projectile {
-    pub position: Tuple, // point
-    pub velocity: Tuple, // vector
+    pub position: Point,  // point
+    pub velocity: Vector, // vector
 }
 
 impl Display for Projectile {
@@ -12,6 +12,6 @@ impl Display for Projectile {
     }
 }
 
-pub fn new_projectile(position: Tuple, velocity: Tuple) -> Projectile {
+pub fn new_projectile(position: Point, velocity: Vector) -> Projectile {
     Projectile { position, velocity }
 }

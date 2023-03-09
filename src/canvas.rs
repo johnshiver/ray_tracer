@@ -78,34 +78,6 @@ impl Canvas {
             });
         content_lines
     }
-    // pub fn get_ppm_pixel_data(&self) -> String {
-    //     let mut pixel_data = String::new();
-    //     let mut curr_line_len = 0;
-    //
-    //     // max length includes 9 + 2 + 1
-    //     let max_pixel_length = 12;
-    //     let max_ppm_line = 70;
-    //     for y in 0..self.height {
-    //         for x in 0..self.width {
-    //             let pixel = self.pixels[y][x];
-    //             let format_string = format!("{}", pixel);
-    //             pixel_data.push_str(&format_string);
-    //             curr_line_len += format_string.len();
-    //
-    //             // if adding another pixel would potentially go over, instead push new line and reset
-    //             if curr_line_len + max_pixel_length > max_ppm_line {
-    //                 pixel_data.push('\n');
-    //                 curr_line_len = 0;
-    //             } else if x != self.width - 1 {
-    //                 pixel_data.push(' ')
-    //             }
-    //         }
-    //         // at the end of a line
-    //         pixel_data.push('\n');
-    //         curr_line_len = 0;
-    //     }
-    //     pixel_data
-    // }
 }
 
 #[cfg(test)]
@@ -152,9 +124,6 @@ mod tests {
         assert_eq!(expected, test_canvas.get_ppm_header())
     }
 
-    // these features seem to work pretty well
-    // even tho tests fail i will ignore for now
-
     #[test]
     fn ppm_pixel_data() {
         let width = 5;
@@ -188,8 +157,6 @@ mod tests {
         }
 
         let pixel_data = test_canvas.get_ppm_pixel_data();
-        // let lines: Vec<&str> = pixel_data.split('\n').collect();
-        // let result = lines.join("\n");
         let mut ppm_lines = pixel_data.lines();
         assert_eq!(
             ppm_lines.next(),

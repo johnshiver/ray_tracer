@@ -41,20 +41,22 @@ fn create_test_image() {
 }
 
 fn simulate_projectile() {
+    let width = 900;
+    let height = 550;
     let start = Point::new_point(0.0, 0.0, 0.0);
     let velocity = Vector::new(1.0, 1.8, 0.0) * 11.25;
     let velocity = velocity.normalize();
     let mut p = new_projectile(start, velocity);
     let gravity = Vector::new(0.0, -0.1, 0.0);
     let wind = Vector::new(0.01, 0.0, 0.0);
-    let mut c = Canvas::new(900, 550);
+    let mut c = Canvas::new(width, height);
     let env = new_environment(gravity, wind);
     let white = Color::new(1.0, 1.0, 1.0);
 
     let alpha = 40.0;
     c.write_pixel(
         (p.position.x * alpha) as usize,
-        (p.position.y * alpha) as usize,
+        height - 1 - (p.position.y * alpha) as usize,
         white,
     );
     while p.position.x >= 0.0 && p.position.y >= 0.0 {
@@ -65,7 +67,7 @@ fn simulate_projectile() {
         );
         c.write_pixel(
             (p.position.x * alpha) as usize,
-            (p.position.y * alpha) as usize,
+            height - 1 - (p.position.y * alpha) as usize,
             white,
         );
     }
