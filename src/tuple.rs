@@ -114,11 +114,6 @@ impl Vector {
         Vector { x, y, z, w: 0.0 }
     }
 
-    /// Vectors with magnitude 0 are a `unit vector` and can be useful for certain operations
-    pub fn is_unit_vector(&self) -> bool {
-        self.magnitude() == 1.0
-    }
-
     /// The distance represented by a vector is called its magnitude, or length.
     ///
     /// It’s how far you would travel in a straight line if you were to walk from
@@ -127,6 +122,13 @@ impl Vector {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
     }
 
+    /// Vectors with magnitude 1 are a `unit vector` and can be useful for certain operations
+    pub fn is_unit_vector(&self) -> bool {
+        self.magnitude() == 1.0
+    }
+
+    /// Normalize creates a unit vector from vector
+    ///
     /// Normalization is the process of taking an arbitrary vector and converting it
     /// into a unit vector.
     ///
@@ -136,23 +138,22 @@ impl Vector {
     /// and your scenes would look terrible (if they rendered at all).
     pub fn normalize(&self) -> Vector {
         let vector_mag = self.magnitude();
-        Vector {
-            x: self.x / vector_mag,
-            y: self.y / vector_mag,
-            z: self.z / vector_mag,
-            w: self.w / vector_mag,
-        }
+        Vector::new(
+            self.x / vector_mag,
+            self.y / vector_mag,
+            self.z / vector_mag,
+        )
     }
 
-    /// Performs dot product on two vectors
+    /// Performs dot product on two vectors returning a scalar value
     ///
     /// The smaller the dot product, the larger the angle between the vectors
     /// A doc product of 1 means the vectors are identical, and a dot product of -1
     /// means they point in opposite directions.
     ///
     /// If the vectors are unit vectors, the dot product is actually the cosine of the angles between them
-    pub fn dot(&self, tb: &Vector) -> f64 {
-        self.x * tb.x + self.y * tb.y + self.z * tb.z + self.w + tb.w
+    pub fn dot(&self, v: &Vector) -> f64 {
+        self.x * v.x + self.y * v.y + self.z * v.z + self.w + v.w
     }
 
     /// Returns a new vector that is perpendicular to both of the original vectors
