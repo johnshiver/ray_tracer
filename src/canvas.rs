@@ -22,7 +22,8 @@ impl Canvas {
     }
     pub fn get_pixel(&self, x: usize, y: usize) -> Option<Color> {
         if x < self.width && y < self.height {
-            Some(self.pixels[y][x])
+            let adjusted_y = self.height - y - 1;
+            Some(self.pixels[adjusted_y][x])
         } else {
             None
         }
