@@ -16,6 +16,10 @@ impl Color {
         }
     }
 
+    pub fn default() -> Self {
+        Color::new(0.0, 0.0, 0.0)
+    }
+
     pub fn red(&self) -> f64 {
         self.components.x
     }
@@ -24,6 +28,14 @@ impl Color {
     }
     pub fn blue(&self) -> f64 {
         self.components.z
+    }
+
+    pub fn scale(self) -> Color {
+        Color::new(
+            scale_color_val(self.red()),
+            scale_color_val(self.green()),
+            scale_color_val(self.blue()),
+        )
     }
 }
 
@@ -83,25 +95,32 @@ impl PartialEq for Color {
 
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        write!(
-            f,
-            "{} {} {}",
-            scale_color_val(self.red()),
-            scale_color_val(self.green()),
-            scale_color_val(self.blue()),
-        )
+        write!(f, "{} {} {}", self.red(), self.green(), self.blue(),)
     }
 }
 
-fn scale_color_val(val: f64) -> i16 {
+///
+///
+/// # Arguments
+///
+/// * `val`:
+///
+/// returns: f64
+///
+/// # Examples
+///
+/// ```
+///
+/// ```
+fn scale_color_val(val: f64) -> f64 {
     let x: f64 = val * 255.0;
 
     if x >= 255.0 {
-        255
+        255.0
     } else if x <= 0.0 {
-        0
+        0.0
     } else {
-        x.ceil() as i16
+        x.ceil()
     }
 }
 
