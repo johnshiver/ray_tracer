@@ -1,8 +1,9 @@
-use std::borrow::Borrow;
-use std::error::Error;
 use std::fmt;
 use std::ops::{Index, Mul};
 
+use thiserror::Error;
+
+use crate::matrix::MatrixError::MatrixNotInvertible;
 use crate::tuple::Tuple;
 use crate::utils::equal_f64;
 
@@ -26,9 +27,31 @@ pub const IDENTITY_MATRIX_4X4: M4x4 = M4x4 {
     ],
 };
 
+#[derive(Debug, Copy, Clone)]
 struct MatrixIndex {
     x: usize,
     y: usize,
+}
+
+impl fmt::Display for MatrixIndex {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Customize so only `x` and `y` are denoted.
+        write!(f, "x: {}, y: {}", self.x, self.y)
+    }
+}
+
+impl MatrixIndex {}
+
+#[derive(Error, Debug)]
+pub enum MatrixError {
+    // #[error("data store disconnected")]
+    // Disconnect(#[from] io::Error),
+    #[error("matrix is not invertible")]
+    MatrixNotInvertible,
+    // #[error("invalid header (expected {expected:?}, found {found:?})")]
+    // InvalidHeader { expected: String, found: String },
+    // #[error("unknown data store error")]
+    // Unknown,
 }
 
 // ----------------------------- 4x4 ------------------------------------
@@ -43,10 +66,10 @@ impl From<[[f64; 4]; 4]> for M4x4 {
     }
 }
 
-impl Index<&MatrixIndex> for M4x4 {
+impl Index<MatrixIndex> for M4x4 {
     type Output = f64;
 
-    fn index(&self, index: &MatrixIndex) -> &Self::Output {
+    fn index(&self, index: MatrixIndex) -> &Self::Output {
         match index {
             MatrixIndex { x: 0..=3, y: 0..=3 } => &self.matrix[index.y][index.x],
             _ => &-99.0,
@@ -61,7 +84,7 @@ impl PartialEq for M4x4 {
         for y in 0..3 {
             for x in 0..3 {
                 let mi = MatrixIndex { x, y };
-                if !(equal_f64(self[&mi], other[&mi])) {
+                if !(equal_f64(self[mi], other[mi])) {
                     return false;
                 }
             }
@@ -70,10 +93,10 @@ impl PartialEq for M4x4 {
     }
 }
 
+/// Matrix multiplication computes the dot product of every row-column combination in the two matrices
 impl Mul<M4x4> for M4x4 {
     type Output = Self;
 
-    /// Matrix multiplication computes the dot product of every row-column combination in the two matrices
     fn mul(self, other: Self) -> Self {
         let mut new_matrix = [[0.0; 4]; 4];
         for y in 0..4 {
@@ -85,10 +108,10 @@ impl Mul<M4x4> for M4x4 {
     }
 }
 
+/// Similar to multiplying by another matrix. Treats the tuple as a one column matrix
 impl Mul<Tuple> for M4x4 {
     type Output = Tuple;
 
-    /// Similar to multiplying by another matrix. Treats the tuple as a one column matrix
     fn mul(self, other: Tuple) -> Tuple {
         Tuple {
             x: cal_index_tuple_multi(&self.matrix, other, 0),
@@ -119,6 +142,11 @@ fn cal_index_tuple_multi(m1: &[[f64; 4]; 4], t: Tuple, r: usize) -> f64 {
     t.x * row[0] + t.y * row[1] + t.z * row[2] + t.w * row[3]
 }
 
+/// Transposing a matrix turn its rows into columns and its columns into rows
+///
+/// Transposing the identity matrix will return the identity matrix
+///
+/// Useful when translating vectors between object space and world space
 pub fn transpose(m: M4x4) -> M4x4 {
     let mut tx_m = [[0.0; 4]; 4];
     for y in 0..4 {
@@ -129,6 +157,7 @@ pub fn transpose(m: M4x4) -> M4x4 {
     M4x4::from(tx_m)
 }
 
+/// Returns submatrix with given row and column removed
 pub fn submatrix_4x4(matrix: &M4x4, row: usize, col: usize) -> M3x3 {
     let mut new_m = [[0.0; 3]; 3];
     let mut write_x = 0;
@@ -151,8 +180,10 @@ pub fn submatrix_4x4(matrix: &M4x4, row: usize, col: usize) -> M3x3 {
     M3x3::from(new_m)
 }
 
+/// Minor is the determinant of given matrix's submatrix given row and column
+///
 pub fn minor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
-    determinant_3x3(submatrix_4x4(matrix, row, col).borrow())
+    determinant_3x3(&submatrix_4x4(matrix, row, col))
 }
 
 pub fn cofactor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
@@ -163,6 +194,10 @@ pub fn cofactor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
     -1.0 * cofactor
 }
 
+/// The determinant is a number that is derived from the elements of a matrix.
+/// The name comes from the use of matrices to solve systems of equations,
+/// where it’s used to determine whether or not the system has a solution.
+/// If the determinant is zero, then the corresponding system of equations has no solution.
 pub fn determinant_4x4(matrix: &M4x4) -> f64 {
     let mut det = 0.0;
     for col in 0..4 {
@@ -175,41 +210,15 @@ pub fn invertible_4x4(matrix: &M4x4) -> bool {
     determinant_4x4(matrix) != 0.0
 }
 
-// Errors --------------------------------------------------
-#[derive(Debug)]
-pub struct MatrixTransformationError {
-    details: String,
-}
-
-impl MatrixTransformationError {
-    fn new(msg: &str) -> MatrixTransformationError {
-        MatrixTransformationError {
-            details: msg.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for MatrixTransformationError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.details)
-    }
-}
-
-impl Error for MatrixTransformationError {
-    fn description(&self) -> &str {
-        &self.details
-    }
-}
-
-impl PartialEq for MatrixTransformationError {
-    fn eq(&self, other: &Self) -> bool {
-        self.details == other.details
-    }
-}
-
-pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixTransformationError> {
+/// The idea of inverting a matrix is similar to the idea of inverting multiplication by dividing
+/// If you multiply 5 * 4 you get 20. Divide 20 by 4 and you get 5.
+/// Same idea for matrices. If you multiple matrix A by B you get C.
+/// Multiply C by the inverse of B and you get A.
+///
+/// Inverting uses the cofactor expansion method
+pub fn invert_4x4(matrix: &M4x4) -> Result<M4x4, MatrixError> {
     if !invertible_4x4(matrix) {
-        return Err(MatrixTransformationError::new("matrix not invertible"));
+        return Err(MatrixNotInvertible);
     }
     let mut cofactors = [[0.0; 4]; 4];
     let det = determinant_4x4(matrix);
@@ -229,12 +238,12 @@ pub struct M3x3 {
     matrix: [[f64; 3]; 3],
 }
 
-impl Index<&MatrixIndex> for M3x3 {
+impl Index<MatrixIndex> for M3x3 {
     type Output = f64;
 
-    fn index(&self, index: &MatrixIndex) -> &Self::Output {
+    fn index(&self, index: MatrixIndex) -> &Self::Output {
         match index {
-            MatrixIndex { x: 0..=2, y: 0..=2 } => self.matrix[index.y][index.x].borrow(),
+            MatrixIndex { x: 0..=2, y: 0..=2 } => &self.matrix[index.y][index.x],
             _ => &-99.0,
         }
     }
@@ -247,7 +256,7 @@ impl PartialEq for M3x3 {
         for y in 0..2 {
             for x in 0..2 {
                 let mi = MatrixIndex { x, y };
-                if !(equal_f64(self[&mi], other[&mi])) {
+                if !(equal_f64(self[mi], other[mi])) {
                     return false;
                 }
             }
@@ -316,12 +325,12 @@ impl From<[[f64; 2]; 2]> for M2x2 {
     }
 }
 
-impl Index<&MatrixIndex> for M2x2 {
+impl Index<MatrixIndex> for M2x2 {
     type Output = f64;
 
-    fn index(&self, index: &MatrixIndex) -> &Self::Output {
+    fn index(&self, index: MatrixIndex) -> &Self::Output {
         match index {
-            MatrixIndex { x: 0..=1, y: 0..=1 } => self.matrix[index.y][index.x].borrow(),
+            MatrixIndex { x: 0..=1, y: 0..=1 } => &self.matrix[index.y][index.x],
             _ => &-99.0,
         }
     }
@@ -334,7 +343,7 @@ impl PartialEq for M2x2 {
         for y in 0..1 {
             for x in 0..1 {
                 let mi = MatrixIndex { x, y };
-                if !(equal_f64(self[&mi], other[&mi])) {
+                if !(equal_f64(self[mi], other[mi])) {
                     return false;
                 }
             }
@@ -367,13 +376,13 @@ mod tests {
             [13.5, 14.5, 15.5, 16.5],
         ];
         let test_m4x4 = M4x4::from(test_matrix);
-        assert_eq!(test_m4x4[&MatrixIndex { x: 0, y: 0 }], 1.0);
-        assert_eq!(test_m4x4[&MatrixIndex { x: 3, y: 0 }], 4.0);
-        assert_eq!(test_m4x4[&MatrixIndex { x: 0, y: 1 }], 5.5);
-        assert_eq!(test_m4x4[&MatrixIndex { x: 2, y: 1 }], 7.5);
-        assert_eq!(test_m4x4[&MatrixIndex { x: 2, y: 2 }], 11.0);
-        assert_eq!(test_m4x4[&MatrixIndex { x: 0, y: 3 }], 13.5);
-        assert_eq!(test_m4x4[&MatrixIndex { x: 2, y: 3 }], 15.5);
+        assert_eq!(test_m4x4[MatrixIndex { x: 0, y: 0 }], 1.0);
+        assert_eq!(test_m4x4[MatrixIndex { x: 3, y: 0 }], 4.0);
+        assert_eq!(test_m4x4[MatrixIndex { x: 0, y: 1 }], 5.5);
+        assert_eq!(test_m4x4[MatrixIndex { x: 2, y: 1 }], 7.5);
+        assert_eq!(test_m4x4[MatrixIndex { x: 2, y: 2 }], 11.0);
+        assert_eq!(test_m4x4[MatrixIndex { x: 0, y: 3 }], 13.5);
+        assert_eq!(test_m4x4[MatrixIndex { x: 2, y: 3 }], 15.5);
     }
 
     #[test]
@@ -440,7 +449,7 @@ mod tests {
             [8.0, 6.0, 4.0, 1.0],
             [0.0, 0.0, 0.0, 1.0],
         ]);
-        let t1 = Point::new_point(1.0, 2.0, 3.0);
+        let point = Point::new_point(1.0, 2.0, 3.0);
         let expected = Tuple {
             x: 18.0,
             y: 24.0,
@@ -448,7 +457,7 @@ mod tests {
             w: 1.0,
         };
 
-        assert_eq!(m1 * t1, expected);
+        assert_eq!(m1 * point, expected);
     }
 
     #[test]
@@ -474,10 +483,10 @@ mod tests {
     fn create_3x3_matrix() {
         let test_matrix = [[-3.0, 5.0, 0.0], [1.0, -2.0, -7.0], [0.0, 1.0, 1.0]];
         let test_m3x3 = M3x3::from(test_matrix);
-        assert_eq!(test_m3x3[&MatrixIndex { x: 0, y: 0 }], -3.0);
-        assert_eq!(test_m3x3[&MatrixIndex { x: 1, y: 1 }], -2.0);
-        assert_eq!(test_m3x3[&MatrixIndex { x: 2, y: 2 }], 1.0);
-        assert_eq!(test_m3x3[&MatrixIndex { x: 1, y: 2 }], 1.0);
+        assert_eq!(test_m3x3[MatrixIndex { x: 0, y: 0 }], -3.0);
+        assert_eq!(test_m3x3[MatrixIndex { x: 1, y: 1 }], -2.0);
+        assert_eq!(test_m3x3[MatrixIndex { x: 2, y: 2 }], 1.0);
+        assert_eq!(test_m3x3[MatrixIndex { x: 1, y: 2 }], 1.0);
     }
 
     #[test]
@@ -494,10 +503,10 @@ mod tests {
     #[test]
     fn create_2x2_matrix() {
         let m = M2x2::from([[-3.0, 5.0], [1.0, -2.0]]);
-        assert_eq!(m[&MatrixIndex { x: 0, y: 0 }], -3.0);
-        assert_eq!(m[&MatrixIndex { x: 1, y: 0 }], 5.0);
-        assert_eq!(m[&MatrixIndex { x: 0, y: 1 }], 1.0);
-        assert_eq!(m[&MatrixIndex { x: 1, y: 1 }], -2.0);
+        assert_eq!(m[MatrixIndex { x: 0, y: 0 }], -3.0);
+        assert_eq!(m[MatrixIndex { x: 1, y: 0 }], 5.0);
+        assert_eq!(m[MatrixIndex { x: 0, y: 1 }], 1.0);
+        assert_eq!(m[MatrixIndex { x: 1, y: 1 }], -2.0);
     }
 
     #[test]

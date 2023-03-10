@@ -1,8 +1,10 @@
-use crate::tuple::{Point, Tuple, Vector};
 use std::fmt::{Display, Formatter, Result};
 
+use crate::tuple::{Point, Vector};
+
 pub struct Projectile {
-    pub position: Point,  // point
+    pub position: Point,
+    // point
     pub velocity: Vector, // vector
 }
 
