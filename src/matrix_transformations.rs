@@ -1,6 +1,7 @@
 use crate::matrix::{M4x4, IDENTITY_MATRIX_4X4};
 
-// moves a point
+/// moves a point by taking the identity matrix
+/// adding x, y, and z to the 4th column
 pub fn translation(x: f64, y: f64, z: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4;
     base_matrix.matrix[0][3] = x;
@@ -9,6 +10,9 @@ pub fn translation(x: f64, y: f64, z: f64) -> M4x4 {
     M4x4::from(base_matrix.matrix)
 }
 
+/// when applied to an object centered at an origin
+/// scaling moves all points away from the origin, effectively
+/// making it larger (scale value > 1) or smaller (scale value < 1)
 pub fn scaling(x: f64, y: f64, z: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4;
     base_matrix.matrix[0][0] = x;
@@ -17,6 +21,8 @@ pub fn scaling(x: f64, y: f64, z: f64) -> M4x4 {
     M4x4::from(base_matrix.matrix)
 }
 
+/// multiplying a tuple by a rotation matrix will
+/// rotate the tuple around the axis
 pub fn rotation_x(radians: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4;
     base_matrix.matrix[1][1] = radians.cos();
@@ -44,6 +50,11 @@ fn rotation_z(radians: f64) -> M4x4 {
     M4x4::from(base_matrix.matrix)
 }
 
+/// A shearing (or skew) transformation has the effect of making straight lines slanted.
+//
+// When applied to a tuple, a shearing transformation changes each component of the tuple
+// in proportion to the other two components. So the x component changes in proportion to
+// y and z, y changes in proportion to x and z, and z changes in proportion to x and y.
 fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4;
     base_matrix.matrix[0][1] = xy;
@@ -57,13 +68,14 @@ fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
 
 #[cfg(test)]
 mod tests {
+    use std::assert_eq;
+    use std::f64::consts::PI;
+
     use crate::matrix::invert_4x4;
     use crate::matrix_transformations::{
         rotation_x, rotation_y, rotation_z, scaling, shearing, translation,
     };
     use crate::tuple::{Point, Vector};
-    use std::borrow::Borrow;
-    use std::f64::consts::PI;
 
     #[test]
     fn translation_matrix() {
@@ -76,14 +88,19 @@ mod tests {
     #[test]
     fn translation_matrix_inversion() {
         let transform = translation(5.0, -3.0, 2.0);
-        let inv = invert_4x4(&transform).unwrap();
+        let inverted_translated = invert_4x4(&transform).unwrap();
         let p = Point::new_point(-3.0, 4.0, 5.0);
         let expected = Point::new_point(-8.0, 7.0, 3.0);
-        assert_eq!(inv * p, expected)
+        assert_eq!(inverted_translated * p, expected)
     }
 
     #[test]
     fn multi_translation_matrix_vector() {
+        // multiplying a translation matrix by a vector shouldnt
+        // do anything! a vector is just an arrow, moving it around
+        // space doesnt change the direction of its point
+        // remember, the w component from a vector is 0
+        // this makes it so the multiplication has no effect
         let transform = translation(5.0, -3.0, 2.0);
         let v = Vector::new(-3.0, 4.0, 5.0);
         assert_eq!(transform * v, v);
@@ -108,7 +125,7 @@ mod tests {
     #[test]
     fn multi_inverse_of_scaling_matrix() {
         let transform = scaling(2.0, 3.0, 4.0);
-        let inv = invert_4x4(transform.borrow()).unwrap();
+        let inv = invert_4x4(&transform).unwrap();
         let v = Vector::new(-4.0, 6.0, 8.0);
         let expected = Vector::new(-2.0, 2.0, 2.0);
         assert_eq!(inv * v, expected);
@@ -136,6 +153,7 @@ mod tests {
 
     #[test]
     fn inverse_x_rotation_rotates_opp_dir() {
+        // inverse of a rotation matrix rotates in the opposite direction
         let p = Point::new_point(0.0, 1.0, 0.0);
         let half_quarter = rotation_x(PI / 4.0);
         let inv = invert_4x4(&half_quarter).unwrap();
@@ -235,6 +253,9 @@ mod tests {
 
     #[test]
     fn chaining_transformations_in_rev() {
+        // from previous example, multiplying the transformation
+        // matrices in reverse order and then multiplying by the same
+        // starting point will result in the same final point
         let p = Point::new_point(1.0, 0.0, 1.0);
         let a = rotation_x(PI / 2.0);
         let b = scaling(5.0, 5.0, 5.0);
