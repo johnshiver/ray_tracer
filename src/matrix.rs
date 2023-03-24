@@ -198,6 +198,12 @@ pub fn cofactor_4x4(matrix: &M4x4, row: usize, col: usize) -> f64 {
 /// The name comes from the use of matrices to solve systems of equations,
 /// where it’s used to determine whether or not the system has a solution.
 /// If the determinant is zero, then the corresponding system of equations has no solution.
+///
+/// ChatGPT-4 explanation
+/// The determinant serves as a tool to determine whether a set of vectors is linearly independent
+/// by providing information about the "size" of the region they span.
+/// If the determinant is non-zero, the vectors are linearly independent, whereas
+/// a determinant of zero indicates that the vectors are linearly dependent.
 pub fn determinant_4x4(matrix: &M4x4) -> f64 {
     let mut det = 0.0;
     for col in 0..4 {
@@ -206,6 +212,41 @@ pub fn determinant_4x4(matrix: &M4x4) -> f64 {
     det
 }
 
+/// invertible_4x4
+///
+/// ChatGPT-4 explanation
+/// An invertible matrix, also known as a non-singular matrix, is a matrix that has an inverse.
+/// If a matrix A is invertible, there exists another matrix A^(-1) such that their product
+/// results in the identity matrix:
+///
+/// A * A^(-1) = A^(-1) * A = I
+///
+/// A matrix is invertible if and only if its determinant is non-zero. This might seem like a simple
+/// statement, but there is a deeper intuition behind it.
+///
+/// Recall that the determinant measures the "size" of the region spanned by the column vectors
+/// of a matrix. In the 2D case, it represents the area of the parallelogram formed by the vectors;
+/// in the 3D case, it represents the volume of the parallelepiped.
+///
+/// If the determinant is zero, it means that the region spanned by the
+/// column vectors is degenerate, which implies that the vectors are linearly dependent.
+/// In this case, the matrix cannot be inverted. This is because when you try to solve a
+/// system of linear equations using a matrix with linearly dependent columns, there will be
+/// either no unique solution (inconsistent system) or infinitely many solutions (dependent system).
+///
+/// On the other hand, if the determinant is non-zero, the region spanned by the column vectors
+/// is non-degenerate, and the vectors are linearly independent. In this case,
+/// the matrix can be inverted. This is because, for each output vector in the target space,
+/// there exists a unique input vector that can be mapped to it using the matrix.
+/// The inverse matrix can then be used to reverse this mapping,
+/// taking output vectors back to their corresponding input vectors.
+///
+/// So, the intuition behind using the determinant to determine if a matrix is invertible is
+/// that a non-zero determinant signifies that the column vectors of the matrix are linearly independent,
+/// and the matrix defines a unique mapping from input vectors to output vectors. In this case,
+/// the matrix can be inverted, and the inverse matrix can be used to reverse the mapping.
+/// If the determinant is zero, the column vectors are linearly dependent, and the
+/// matrix cannot be inverted, as it does not define a unique mapping.
 pub fn invertible_4x4(matrix: &M4x4) -> bool {
     determinant_4x4(matrix) != 0.0
 }
