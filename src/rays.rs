@@ -96,15 +96,21 @@ impl Index<usize> for Intersections<Sphere> {
     }
 }
 
-pub fn intersections(items: Vec<Intersection<Sphere>>) -> Intersections<Sphere> {
-    Intersections { items }
+impl<T> From<Vec<Intersection<T>>> for Intersections<T> {
+    fn from(items: Vec<Intersection<T>>) -> Self {
+        Intersections { items }
+    }
 }
+
+// pub fn intersections(items: Vec<Intersection<Sphere>>) -> Intersections<Sphere> {
+//     Intersections { items }
+// }
 
 // returns set of t values, where ray intersects sphere
 pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     let d = r.discriminant();
     if d < 0.0 {
-        return intersections(vec![]);
+        return Intersections::from(vec![]);
     }
     let sphere_to_ray = r.origin - SPHERE_ORIGIN;
     let a = r.direction.dot(&r.direction);
@@ -117,7 +123,7 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     let i1 = new_intersection(t1, s.clone());
     let i2 = new_intersection(t2, s.clone());
 
-    intersections(vec![i1, i2])
+    Intersections::from(vec![i1, i2])
 }
 
 pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
@@ -145,7 +151,7 @@ pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::rays::{hit, intersect, intersections, new_intersection, new_sphere, Ray};
+    use crate::rays::{hit, intersect, new_intersection, new_sphere, Intersections, Ray};
     use crate::tuple::{Point, Vector};
 
     #[test]
@@ -231,7 +237,7 @@ mod tests {
         let i1 = new_intersection(1.0, s);
         let i2 = new_intersection(2.0, s);
 
-        let xs = intersections(vec![i1, i2]);
+        let xs = Intersections::from(vec![i1, i2]);
         assert_eq!(xs[0].t, 1.0);
         assert_eq!(xs[1].t, 2.0);
         assert_eq!(xs.size(), 2);
@@ -243,7 +249,7 @@ mod tests {
         let i1 = new_intersection(1.0, s);
         let i2 = new_intersection(2.0, s);
 
-        let xs = intersections(vec![i1, i2]);
+        let xs = Intersections::from(vec![i1, i2]);
         let i = hit(xs).unwrap();
         assert_eq!(i, i1);
     }
@@ -254,7 +260,7 @@ mod tests {
         let i1 = new_intersection(-1.0, s);
         let i2 = new_intersection(1.0, s);
 
-        let xs = intersections(vec![i2, i1]);
+        let xs = Intersections::from(vec![i2, i1]);
         let i = hit(xs).unwrap();
         assert_eq!(i, i2);
     }
@@ -265,7 +271,7 @@ mod tests {
         let i1 = new_intersection(-2.0, s);
         let i2 = new_intersection(-1.0, s);
 
-        let xs = intersections(vec![i2, i1]);
+        let xs = Intersections::from(vec![i2, i1]);
         // i should be none, implement with option
         let i = hit(xs);
         assert_eq!(i, None);
