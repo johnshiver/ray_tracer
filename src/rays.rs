@@ -81,7 +81,12 @@ pub fn new_intersection(t: f64, object: Sphere) -> Intersection<Sphere> {
 
 pub struct Intersections<T> {
     items: Vec<Intersection<T>>,
-    count: i64,
+}
+
+impl<T> Intersections<T> {
+    fn size(&self) -> usize {
+        self.items.len()
+    }
 }
 
 impl Index<usize> for Intersections<Sphere> {
@@ -91,15 +96,15 @@ impl Index<usize> for Intersections<Sphere> {
     }
 }
 
-pub fn intersections(items: Vec<Intersection<Sphere>>, count: i64) -> Intersections<Sphere> {
-    Intersections { items, count }
+pub fn intersections(items: Vec<Intersection<Sphere>>) -> Intersections<Sphere> {
+    Intersections { items }
 }
 
 // returns set of t values, where ray intersects sphere
 pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     let d = r.discriminant();
     if d < 0.0 {
-        return intersections(vec![], 0);
+        return intersections(vec![]);
     }
     let sphere_to_ray = r.origin - SPHERE_ORIGIN;
     let a = r.direction.dot(&r.direction);
@@ -112,14 +117,11 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     let i1 = new_intersection(t1, s.clone());
     let i2 = new_intersection(t2, s.clone());
 
-    if t1 == t2 {
-        return intersections(vec![i1, i2], 1);
-    }
-    intersections(vec![i1, i2], 2)
+    intersections(vec![i1, i2])
 }
 
 pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
-    if xs.count < 1 {
+    if xs.size() < 1 {
         return None;
     }
     const FLOAT_MAX: f64 = 999_999_999.0;
@@ -169,7 +171,7 @@ mod tests {
         let r = Ray::new(Point::new_point(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = new_sphere();
         let xs = intersect(&r, s);
-        assert_eq!(xs.count, 2);
+        assert_eq!(xs.size(), 2);
         assert_eq!(xs[0].t, 4.0);
         assert_eq!(xs[1].t, 6.0);
     }
@@ -179,7 +181,7 @@ mod tests {
         let r = Ray::new(Point::new_point(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = new_sphere();
         let xs = intersect(&r, s);
-        assert_eq!(xs.count, 1);
+        assert_eq!(xs.size(), 2);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, 5.0);
         assert_eq!(xs[1].t, 5.0);
@@ -190,7 +192,7 @@ mod tests {
         let r = Ray::new(Point::new_point(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = new_sphere();
         let xs = intersect(&r, s);
-        assert_eq!(xs.count, 0);
+        assert_eq!(xs.size(), 0);
     }
 
     #[test]
@@ -198,7 +200,7 @@ mod tests {
         let r = Ray::new(Point::new_point(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let s = new_sphere();
         let xs = intersect(&r, s);
-        assert_eq!(xs.count, 2);
+        assert_eq!(xs.size(), 2);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, -1.0);
         assert_eq!(xs[1].t, 1.0);
@@ -209,7 +211,7 @@ mod tests {
         let r = Ray::new(Point::new_point(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
         let s = new_sphere();
         let xs = intersect(&r, s);
-        assert_eq!(xs.count, 2);
+        assert_eq!(xs.size(), 2);
         // assuming two intersections for simplicity
         assert_eq!(xs[0].t, -6.0);
         assert_eq!(xs[1].t, -4.0);
@@ -229,10 +231,10 @@ mod tests {
         let i1 = new_intersection(1.0, s);
         let i2 = new_intersection(2.0, s);
 
-        let xs = intersections(vec![i1, i2], 2);
+        let xs = intersections(vec![i1, i2]);
         assert_eq!(xs[0].t, 1.0);
         assert_eq!(xs[1].t, 2.0);
-        assert_eq!(xs.count, 2);
+        assert_eq!(xs.size(), 2);
     }
 
     #[test]
@@ -241,7 +243,7 @@ mod tests {
         let i1 = new_intersection(1.0, s);
         let i2 = new_intersection(2.0, s);
 
-        let xs = intersections(vec![i1, i2], 2);
+        let xs = intersections(vec![i1, i2]);
         let i = hit(xs).unwrap();
         assert_eq!(i, i1);
     }
@@ -252,7 +254,7 @@ mod tests {
         let i1 = new_intersection(-1.0, s);
         let i2 = new_intersection(1.0, s);
 
-        let xs = intersections(vec![i2, i1], 2);
+        let xs = intersections(vec![i2, i1]);
         let i = hit(xs).unwrap();
         assert_eq!(i, i2);
     }
@@ -263,7 +265,7 @@ mod tests {
         let i1 = new_intersection(-2.0, s);
         let i2 = new_intersection(-1.0, s);
 
-        let xs = intersections(vec![i2, i1], 2);
+        let xs = intersections(vec![i2, i1]);
         // i should be none, implement with option
         let i = hit(xs);
         assert_eq!(i, None);
