@@ -41,14 +41,17 @@ pub struct Sphere {
     pub id: Uuid,
 }
 
+impl Sphere {
+    // Factory method to create a new Intersection
+    pub fn new() -> Self {
+        Sphere { id: Uuid::new_v4() }
+    }
+}
+
 impl PartialEq for Sphere {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
-}
-
-pub fn new_sphere() -> Sphere {
-    Sphere { id: Uuid::new_v4() }
 }
 
 #[derive(Debug)]
@@ -56,6 +59,13 @@ pub struct Intersection<T> {
     pub t: f64,
     // value of intersection
     pub object: T, // object that was intersected
+}
+
+impl<T> Intersection<T> {
+    // Factory method to create a new Intersection
+    pub fn new(t: f64, object: T) -> Self {
+        Intersection { t, object }
+    }
 }
 
 impl PartialEq for Intersection<Sphere> {
@@ -73,10 +83,6 @@ impl Clone for Intersection<Sphere> {
             object: self.object,
         }
     }
-}
-
-pub fn new_intersection(t: f64, object: Sphere) -> Intersection<Sphere> {
-    Intersection { t, object }
 }
 
 pub struct Intersections<T> {
@@ -102,10 +108,6 @@ impl<T> From<Vec<Intersection<T>>> for Intersections<T> {
     }
 }
 
-// pub fn intersections(items: Vec<Intersection<Sphere>>) -> Intersections<Sphere> {
-//     Intersections { items }
-// }
-
 // returns set of t values, where ray intersects sphere
 pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     let d = r.discriminant();
@@ -120,8 +122,8 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     let t2 = (-b + d.sqrt()) / (2.0 * a);
 
     // TODO: copying here because I dont understand lifetime stuff :/
-    let i1 = new_intersection(t1, s.clone());
-    let i2 = new_intersection(t2, s.clone());
+    let i1 = Intersection::new(t1, s.clone());
+    let i2 = Intersection::new(t2, s.clone());
 
     Intersections::from(vec![i1, i2])
 }
@@ -151,7 +153,7 @@ pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::rays::{hit, intersect, new_intersection, new_sphere, Intersections, Ray};
+    use crate::rays::{hit, intersect, Intersection, Intersections, Ray, Sphere};
     use crate::tuple::{Point, Vector};
 
     #[test]
@@ -175,7 +177,7 @@ mod tests {
     #[test]
     fn ray_intersects_sphere_two_pts() {
         let r = Ray::new(Point::new_point(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = new_sphere();
+        let s = Sphere::new();
         let xs = intersect(&r, s);
         assert_eq!(xs.size(), 2);
         assert_eq!(xs[0].t, 4.0);
@@ -185,7 +187,7 @@ mod tests {
     #[test]
     fn ray_intersects_sphere_at_tangent() {
         let r = Ray::new(Point::new_point(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = new_sphere();
+        let s = Sphere::new();
         let xs = intersect(&r, s);
         assert_eq!(xs.size(), 2);
         // assuming two intersections for simplicity
@@ -196,7 +198,7 @@ mod tests {
     #[test]
     fn ray_misses_sphere() {
         let r = Ray::new(Point::new_point(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = new_sphere();
+        let s = Sphere::new();
         let xs = intersect(&r, s);
         assert_eq!(xs.size(), 0);
     }
@@ -204,7 +206,7 @@ mod tests {
     #[test]
     fn ray_originates_inside_sphere() {
         let r = Ray::new(Point::new_point(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
-        let s = new_sphere();
+        let s = Sphere::new();
         let xs = intersect(&r, s);
         assert_eq!(xs.size(), 2);
         // assuming two intersections for simplicity
@@ -215,7 +217,7 @@ mod tests {
     #[test]
     fn sphere_is_behind_ray() {
         let r = Ray::new(Point::new_point(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = new_sphere();
+        let s = Sphere::new();
         let xs = intersect(&r, s);
         assert_eq!(xs.size(), 2);
         // assuming two intersections for simplicity
@@ -225,17 +227,17 @@ mod tests {
 
     #[test]
     fn intersection_encapsulates_t_object() {
-        let s = new_sphere();
-        let i = new_intersection(3.5, s);
+        let s = Sphere::new();
+        let i = Intersection::new(3.5, s);
         assert_eq!(i.t, 3.5);
         assert_eq!(i.object, s);
     }
 
     #[test]
     fn aggregating_intersections() {
-        let s = new_sphere();
-        let i1 = new_intersection(1.0, s);
-        let i2 = new_intersection(2.0, s);
+        let s = Sphere::new();
+        let i1 = Intersection::new(1.0, s);
+        let i2 = Intersection::new(2.0, s);
 
         let xs = Intersections::from(vec![i1, i2]);
         assert_eq!(xs[0].t, 1.0);
@@ -245,9 +247,9 @@ mod tests {
 
     #[test]
     fn hit_all_intersections_positive() {
-        let s = new_sphere();
-        let i1 = new_intersection(1.0, s);
-        let i2 = new_intersection(2.0, s);
+        let s = Sphere::new();
+        let i1 = Intersection::new(1.0, s);
+        let i2 = Intersection::new(2.0, s);
 
         let xs = Intersections::from(vec![i1, i2]);
         let i = hit(xs).unwrap();
@@ -256,9 +258,9 @@ mod tests {
 
     #[test]
     fn hit_some_intersections_negative() {
-        let s = new_sphere();
-        let i1 = new_intersection(-1.0, s);
-        let i2 = new_intersection(1.0, s);
+        let s = Sphere::new();
+        let i1 = Intersection::new(-1.0, s);
+        let i2 = Intersection::new(1.0, s);
 
         let xs = Intersections::from(vec![i2, i1]);
         let i = hit(xs).unwrap();
@@ -267,9 +269,9 @@ mod tests {
 
     #[test]
     fn hit_all_intersections_negative() {
-        let s = new_sphere();
-        let i1 = new_intersection(-2.0, s);
-        let i2 = new_intersection(-1.0, s);
+        let s = Sphere::new();
+        let i1 = Intersection::new(-2.0, s);
+        let i2 = Intersection::new(-1.0, s);
 
         let xs = Intersections::from(vec![i2, i1]);
         // i should be none, implement with option
