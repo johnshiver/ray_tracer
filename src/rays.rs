@@ -211,7 +211,7 @@ pub fn transform(ray: Ray, translation_matrix: M4x4) -> Ray {
 
 #[cfg(test)]
 mod tests {
-    use crate::matrix_transformations::translation;
+    use crate::matrix_transformations::{scaling, translation};
     use crate::rays::{hit, intersect, transform, Intersection, Intersections, Ray, Sphere};
     use crate::tuple::{Point, Vector};
 
@@ -354,5 +354,14 @@ mod tests {
         let r2 = transform(r, m);
         assert_eq!(r2.origin, Point::new_point(4.0, 6.0, 8.0));
         assert_eq!(r2.direction, Vector::new(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn scaling_a_ray() {
+        let r = Ray::new(Point::new_point(1.0, 2.0, 3.0), Vector::new(0.0, 1.0, 0.0));
+        let m = scaling(2.0, 3.0, 4.0);
+        let r2 = transform(r, m);
+        assert_eq!(r2.origin, Point::new_point(2.0, 6.0, 12.0));
+        assert_eq!(r2.direction, Vector::new(0.0, 3.0, 0.0));
     }
 }
