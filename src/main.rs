@@ -41,8 +41,8 @@ fn create_test_image() {
 }
 
 fn simulate_projectile() {
-    let width = 900;
-    let height = 550;
+    let width = 500;
+    let height = 250;
     let start = Point::new_point(0.0, 0.0, 0.0);
     let velocity = Vector::new(1.0, 1.8, 0.0) * 11.25;
     let velocity = velocity.normalize();

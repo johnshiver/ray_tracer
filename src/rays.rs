@@ -1,11 +1,11 @@
 use std::borrow::Borrow;
 use std::ops::Index;
 
+use crate::matrix::M4x4;
+use crate::tuple::{Point, Tuple, Vector};
 use uuid::Uuid;
 
-use crate::tuple::{Point, Tuple, Vector};
-
-pub const SPHERE_ORIGIN: Tuple = Tuple {
+pub const SPHERE_ORIGIN: Tuple = Point {
     x: 0.0,
     y: 0.0,
     z: 0.0,
@@ -203,9 +203,16 @@ pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
         .copied() // Convert the reference to an owned value
 }
 
+pub fn transform(ray: Ray, translation_matrix: M4x4) -> Ray {
+    let new_origin = translation_matrix * ray.origin;
+    let new_direction = translation_matrix * ray.direction;
+    Ray::new(new_origin, new_direction)
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::rays::{hit, intersect, Intersection, Intersections, Ray, Sphere};
+    use crate::matrix_transformations::translation;
+    use crate::rays::{hit, intersect, transform, Intersection, Intersections, Ray, Sphere};
     use crate::tuple::{Point, Vector};
 
     #[test]
@@ -225,7 +232,6 @@ mod tests {
         assert_eq!(r.position(-1.0), Point::new_point(1.0, 3.0, 4.0));
         assert_eq!(r.position(2.5), Point::new_point(4.5, 3.0, 4.0));
     }
-
     #[test]
     fn ray_intersects_sphere_two_pts() {
         let r = Ray::new(Point::new_point(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
@@ -339,5 +345,14 @@ mod tests {
         // i should be none, implement with option
         let i = hit(xs);
         assert_eq!(i, None);
+    }
+
+    #[test]
+    fn translating_a_ray() {
+        let r = Ray::new(Point::new_point(1.0, 2.0, 3.0), Vector::new(0.0, 1.0, 0.0));
+        let m = translation(3.0, 4.0, 5.0);
+        let r2 = transform(r, m);
+        assert_eq!(r2.origin, Point::new_point(4.0, 6.0, 8.0));
+        assert_eq!(r2.direction, Vector::new(0.0, 1.0, 0.0));
     }
 }
