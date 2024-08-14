@@ -27,6 +27,22 @@ impl Ray {
         self.origin + self.direction * time
     }
 
+    /// Calculates the discriminant of the quadratic equation that arises from the
+    /// intersection of a ray with a sphere centered at the origin (0, 0, 0) with a unit radius.
+    ///
+    /// This discriminant is derived by substituting the ray's equation into the sphere's equation,
+    /// resulting in a quadratic equation in terms of the parameter `t`. The discriminant determines
+    /// the nature of the intersection:
+    /// - A positive discriminant indicates two intersection points, meaning the ray enters and exits the sphere.
+    /// - A zero discriminant indicates one intersection point, meaning the ray is tangent to the sphere (touching it at one point).
+    /// - A negative discriminant indicates no intersection, meaning the ray does not intersect the sphere.
+    ///
+    /// This method assumes the sphere is centered at the origin with a radius of 1, simplifying the
+    /// calculations by focusing on the specific case where the sphere is at the origin.
+    ///
+    /// # Returns
+    ///
+    /// The discriminant value as a floating-point number (`f64`).
     pub fn discriminant(&self) -> f64 {
         let sphere_to_ray = self.origin - SPHERE_ORIGIN;
         let a = self.direction.dot(&self.direction);
@@ -180,26 +196,11 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
 }
 
 pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
-    if xs.size() < 1 {
-        return None;
-    }
-    const FLOAT_MAX: f64 = 999_999_999.0;
-    let mut smallest = Intersection {
-        t: FLOAT_MAX, // TODO: get a proper max
-        object: Sphere {
-            id: Default::default(),
-        },
-    };
-
-    for i in xs.items {
-        if i.t < smallest.t && i.t >= 0.0 {
-            smallest = i;
-        }
-    }
-    if smallest.t == FLOAT_MAX {
-        return None;
-    }
-    Some(smallest)
+    xs.items
+        .iter() // Iterate over the intersections
+        .filter(|i| i.t >= 0.0) // Only consider intersections with t >= 0.0
+        .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap()) // Find the intersection with the smallest t
+        .copied() // Convert the reference to an owned value
 }
 
 #[cfg(test)]
@@ -294,6 +295,16 @@ mod tests {
         assert_eq!(xs[0].t, 1.0);
         assert_eq!(xs[1].t, 2.0);
         assert_eq!(xs.size(), 2);
+    }
+
+    #[test]
+    fn intersect_sets_object_on_intersection() {
+        let r = Ray::new(Point::new_point(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let s = Sphere::new();
+        let xs = intersect(&r, s);
+        assert_eq!(xs.size(), 2);
+        assert_eq!(xs[0].object, s);
+        assert_eq!(xs[1].object, s);
     }
 
     #[test]
