@@ -108,23 +108,74 @@ impl<T> From<Vec<Intersection<T>>> for Intersections<T> {
     }
 }
 
-// returns set of t values, where ray intersects sphere
+/// Computes the intersection points between a ray and a sphere.
+///
+/// This function calculates the intersection points, if any, between a ray and a sphere
+/// using the quadratic formula. The ray is defined by its origin and direction, and the sphere
+/// is assumed to be centered at `SPHERE_ORIGIN` with a radius of 1.0.
+///
+/// The quadratic equation used is derived from the formula for a sphere and a parametric
+/// equation for a ray:
+///
+/// - Sphere equation: `(x - cx)^2 + (y - cy)^2 + (z - cz)^2 = r^2`
+/// - Ray equation: `P(t) = O + tD`, where `O` is the origin, `D` is the direction, and `t` is the parameter
+///
+/// By substituting the ray equation into the sphere equation and rearranging terms,
+/// we get a quadratic equation of the form `at^2 + bt + c = 0`, where:
+///
+/// - `a` is the dot product of the direction vector with itself.
+/// - `b` is 2 times the dot product of the direction vector and the vector from the sphere's center to the ray's origin.
+/// - `c` is the dot product of the vector from the sphere's center to the ray's origin with itself, minus the radius squared (1.0 in this case).
+///
+/// The discriminant `d = b^2 - 4ac` determines the nature of the intersection:
+///
+/// - If `d < 0`, the ray does not intersect the sphere.
+/// - If `d = 0`, the ray touches the sphere at exactly one point (tangent).
+/// - If `d > 0`, the ray intersects the sphere at two points (entering and exiting).
+///
+/// The function returns an `Intersections<Sphere>` object containing the `t` values where the intersections occur.
+///
+/// # Arguments
+///
+/// * `r` - A reference to the `Ray` that might intersect the sphere.
+/// * `s` - The `Sphere` that the ray might intersect.
+///
+/// # Returns
+///
+/// An `Intersections<Sphere>` object containing the intersection points, if any.
 pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
+    // Calculate the discriminant, which determines the number of intersection points
     let d = r.discriminant();
+
+    // If the discriminant is negative, there are no real intersections (ray misses the sphere)
     if d < 0.0 {
-        return Intersections::from(vec![]);
+        return Intersections::from(vec![]); // Return an empty list of intersections
     }
+
+    // Vector from the sphere's origin (assumed to be the origin in this case) to the ray's origin
     let sphere_to_ray = r.origin - SPHERE_ORIGIN;
-    let a = r.direction.dot(&r.direction);
-    let b = 2.0 * r.direction.dot(&sphere_to_ray);
 
-    let t1 = (-b - d.sqrt()) / (2.0 * a);
-    let t2 = (-b + d.sqrt()) / (2.0 * a);
+    // Calculate the coefficients of the quadratic equation
+    let a = r.direction.dot(&r.direction); // Coefficient 'a' (direction vector dot product with itself)
+    let b = 2.0 * r.direction.dot(&sphere_to_ray); // Coefficient 'b' (2 times direction dot product with sphere_to_ray vector)
 
-    // TODO: copying here because I dont understand lifetime stuff :/
-    let i1 = Intersection::new(t1, s.clone());
-    let i2 = Intersection::new(t2, s.clone());
+    // The discriminant is zero, meaning the ray is tangent to the sphere.
+    // This results in exactly one intersection point (the ray just touches the sphere).
+    if d == 0.0 {
+        let t = -b / (2.0 * a); // Calculate the single intersection point
+        let i = Intersection::new(t, s.clone()); // Create the Intersection object for this point
+        return Intersections::from(vec![i, i]); // Return the single intersection as a list with two elements, but they are the same
+    }
 
+    // Calculate the two possible values of t (parameter along the ray) where intersections occur
+    let t1 = (-b - d.sqrt()) / (2.0 * a); // First intersection point (entering the sphere)
+    let t2 = (-b + d.sqrt()) / (2.0 * a); // Second intersection point (exiting the sphere)
+
+    // Create Intersection objects for each intersection point with the sphere
+    let i1 = Intersection::new(t1, s.clone()); // Intersection at t1
+    let i2 = Intersection::new(t2, s.clone()); // Intersection at t2
+
+    // Return a list of the intersections
     Intersections::from(vec![i1, i2])
 }
 
