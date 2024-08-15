@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
-use std::ops::Index;
+use std::ops::{Index, Mul};
 
-use crate::matrix::M4x4;
+use crate::matrix::{invert_4x4, M4x4, IDENTITY_MATRIX_4X4};
 use crate::tuple::{Point, Tuple, Vector};
 use uuid::Uuid;
 
@@ -55,12 +55,20 @@ impl Ray {
 #[derive(Debug, Clone, Copy)]
 pub struct Sphere {
     pub id: Uuid,
+    pub transform: M4x4,
 }
 
 impl Sphere {
     // Factory method to create a new Intersection
     pub fn new() -> Self {
-        Sphere { id: Uuid::new_v4() }
+        Sphere {
+            id: Uuid::new_v4(),
+            transform: IDENTITY_MATRIX_4X4,
+        }
+    }
+
+    pub fn set_transform(&mut self, transform: M4x4) {
+        self.transform = transform;
     }
 }
 
@@ -160,6 +168,10 @@ impl<T> From<Vec<Intersection<T>>> for Intersections<T> {
 ///
 /// An `Intersections<Sphere>` object containing the intersection points, if any.
 pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
+    // first transform ray by inverse of sphere's transformation
+    let inverted_tx = invert_4x4(&s.transform).unwrap();
+    let r = transform(r, inverted_tx);
+
     // Calculate the discriminant, which determines the number of intersection points
     let d = r.discriminant();
 
@@ -203,7 +215,7 @@ pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
         .copied() // Convert the reference to an owned value
 }
 
-pub fn transform(ray: Ray, translation_matrix: M4x4) -> Ray {
+pub fn transform(ray: &Ray, translation_matrix: M4x4) -> Ray {
     let new_origin = translation_matrix * ray.origin;
     let new_direction = translation_matrix * ray.direction;
     Ray::new(new_origin, new_direction)
@@ -211,6 +223,7 @@ pub fn transform(ray: Ray, translation_matrix: M4x4) -> Ray {
 
 #[cfg(test)]
 mod tests {
+    use crate::matrix::IDENTITY_MATRIX_4X4;
     use crate::matrix_transformations::{scaling, translation};
     use crate::rays::{hit, intersect, transform, Intersection, Intersections, Ray, Sphere};
     use crate::tuple::{Point, Vector};
@@ -351,7 +364,7 @@ mod tests {
     fn translating_a_ray() {
         let r = Ray::new(Point::new_point(1.0, 2.0, 3.0), Vector::new(0.0, 1.0, 0.0));
         let m = translation(3.0, 4.0, 5.0);
-        let r2 = transform(r, m);
+        let r2 = transform(&r, m);
         assert_eq!(r2.origin, Point::new_point(4.0, 6.0, 8.0));
         assert_eq!(r2.direction, Vector::new(0.0, 1.0, 0.0));
     }
@@ -360,8 +373,42 @@ mod tests {
     fn scaling_a_ray() {
         let r = Ray::new(Point::new_point(1.0, 2.0, 3.0), Vector::new(0.0, 1.0, 0.0));
         let m = scaling(2.0, 3.0, 4.0);
-        let r2 = transform(r, m);
+        let r2 = transform(&r, m);
         assert_eq!(r2.origin, Point::new_point(2.0, 6.0, 12.0));
         assert_eq!(r2.direction, Vector::new(0.0, 3.0, 0.0));
+    }
+
+    #[test]
+    fn sphere_default_transform() {
+        let s = Sphere::new();
+        assert_eq!(s.transform, IDENTITY_MATRIX_4X4);
+    }
+
+    #[test]
+    fn changing_sphere_transform() {
+        let mut s = Sphere::new();
+        let t = translation(2.0, 3.0, 4.0);
+        s.set_transform(t);
+        assert_eq!(s.transform, t)
+    }
+
+    #[test]
+    fn intersecting_scaled_sphere_with_ray() {
+        let r = Ray::new(Point::new_point(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let mut s = Sphere::new();
+        s.set_transform(scaling(2.0, 2.0, 2.0));
+        let xs = intersect(&r, s);
+        assert_eq!(xs.size(), 2);
+        assert_eq!(xs[0].t, 3.0);
+        assert_eq!(xs[1].t, 7.0);
+    }
+
+    #[test]
+    fn intersecting_translated_sphere_with_ray() {
+        let r = Ray::new(Point::new_point(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let mut s = Sphere::new();
+        s.set_transform(translation(5.0, 0.0, 0.0));
+        let xs = intersect(&r, s);
+        assert_eq!(xs.size(), 0);
     }
 }

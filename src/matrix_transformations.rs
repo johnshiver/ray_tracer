@@ -10,6 +10,8 @@ pub fn translation(x: f64, y: f64, z: f64) -> M4x4 {
     M4x4::from(base_matrix.matrix)
 }
 
+/// generates a scaling matrix
+///
 /// when applied to an object centered at an origin
 /// scaling moves all points away from the origin, effectively
 /// making it larger (scale value > 1) or smaller (scale value < 1)
