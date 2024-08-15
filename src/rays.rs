@@ -114,7 +114,7 @@ pub struct Intersections<T> {
 }
 
 impl<T> Intersections<T> {
-    fn size(&self) -> usize {
+    pub fn size(&self) -> usize {
         self.items.len()
     }
 }
