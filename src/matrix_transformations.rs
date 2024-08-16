@@ -43,7 +43,7 @@ pub fn rotation_y(radians: f64) -> M4x4 {
     M4x4::from(base_matrix.matrix)
 }
 
-fn rotation_z(radians: f64) -> M4x4 {
+pub fn rotation_z(radians: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4;
     base_matrix.matrix[0][0] = radians.cos();
     base_matrix.matrix[0][1] = -radians.sin();
@@ -57,7 +57,7 @@ fn rotation_z(radians: f64) -> M4x4 {
 // When applied to a tuple, a shearing transformation changes each component of the tuple
 // in proportion to the other two components. So the x component changes in proportion to
 // y and z, y changes in proportion to x and z, and z changes in proportion to x and y.
-fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
+pub fn shearing(xy: f64, xx: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> M4x4 {
     let mut base_matrix = IDENTITY_MATRIX_4X4;
     base_matrix.matrix[0][1] = xy;
     base_matrix.matrix[0][2] = xx;
