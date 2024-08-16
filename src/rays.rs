@@ -59,7 +59,6 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    // Factory method to create a new Intersection
     pub fn new() -> Self {
         Sphere {
             id: Uuid::new_v4(),
@@ -69,6 +68,11 @@ impl Sphere {
 
     pub fn set_transform(&mut self, transform: M4x4) {
         self.transform = transform;
+    }
+
+    // assumes point is always on the surface of the sphere
+    pub fn normal_at(&self, point: Point) -> Vector {
+        Vector::new(point.x, point.y, point.z).normalize()
     }
 }
 
@@ -410,5 +414,37 @@ mod tests {
         s.set_transform(translation(5.0, 0.0, 0.0));
         let xs = intersect(&r, s);
         assert_eq!(xs.size(), 0);
+    }
+
+    #[test]
+    fn normal_on_sphere_at_point_x_axis() {
+        let s = Sphere::new();
+        let norm = s.normal_at(Point::new_point(1.0, 0.0, 0.0));
+        assert_eq!(norm, Vector::new(1.0, 0.0, 0.0));
+        assert_eq!(norm, norm.normalize());
+    }
+
+    #[test]
+    fn normal_on_sphere_at_point_y_axis() {
+        let s = Sphere::new();
+        let norm = s.normal_at(Point::new_point(0.0, 1.0, 0.0));
+        assert_eq!(norm, Vector::new(0.0, 1.0, 0.0));
+        assert_eq!(norm, norm.normalize());
+    }
+    #[test]
+    fn normal_on_sphere_at_point_z_axis() {
+        let s = Sphere::new();
+        let norm = s.normal_at(Point::new_point(0.0, 0.0, 1.0));
+        assert_eq!(norm, Vector::new(0.0, 0.0, 1.0));
+        assert_eq!(norm, norm.normalize());
+    }
+
+    #[test]
+    fn normal_on_sphere_at_non_axial_point() {
+        let s = Sphere::new();
+        let val = (3.0_f64).sqrt() / 3.0;
+        let norm = s.normal_at(Point::new_point(val, val, val));
+        assert_eq!(norm, Vector::new(val, val, val));
+        assert_eq!(norm, norm.normalize());
     }
 }

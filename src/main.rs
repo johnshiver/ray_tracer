@@ -101,7 +101,7 @@ fn analog_clock() {
 fn cast_ray_onto_sphere() {
     let canvas_pixels = 100;
     let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
-    let color = Color::new(1.0, 0.0, 0.0); // red color
+    let red = Color::new(1.0, 0.0, 0.0); // red color
 
     let shape = Sphere::new();
     // can mess around with various transformations here
@@ -125,7 +125,7 @@ fn cast_ray_onto_sphere() {
             let r = Ray::new(ray_origin, (position - ray_origin).normalize());
             let xs = intersect(&r, shape);
             if hit(xs).is_some() {
-                canvas.write_pixel(x, y, color);
+                canvas.write_pixel(x, y, red);
             }
         }
     }
