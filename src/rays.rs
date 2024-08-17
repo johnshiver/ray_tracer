@@ -278,11 +278,17 @@ pub fn transform(ray: &Ray, translation_matrix: M4x4) -> Ray {
     Ray::new(new_origin, new_direction)
 }
 
+pub fn reflect(incoming: Vector, normal: Vector) -> Vector {
+    incoming - normal * 2.0_f64 * incoming.dot(&normal)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::matrix::IDENTITY_MATRIX_4X4;
     use crate::matrix_transformations::{rotation_z, scaling, translation};
-    use crate::rays::{hit, intersect, transform, Intersection, Intersections, Ray, Sphere};
+    use crate::rays::{
+        hit, intersect, reflect, transform, Intersection, Intersections, Ray, Sphere,
+    };
     use crate::tuple::{Point, Vector};
     use std::f64::consts::{FRAC_1_SQRT_2, PI};
 
@@ -507,7 +513,7 @@ mod tests {
         let mut s = Sphere::new();
         s.set_transform(translation(0.0, 1.0, 0.0));
         let n = s.normal_at(Point::new_point(0.0, 1.70711, -FRAC_1_SQRT_2));
-        assert_eq!(n, Vector::new(0.0, 0.70711, -0.70711));
+        assert_eq!(n, Vector::new(0.0, FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
     }
 
     #[test]
@@ -521,5 +527,21 @@ mod tests {
             -(2.0_f64.sqrt()) / 2.0,
         ));
         assert_eq!(n, Vector::new(0.0, 0.97014, -0.24254));
+    }
+
+    #[test]
+    fn reflecting_vector_at_45_degrees() {
+        let v = Vector::new(1.0, -1.0, 0.0);
+        let n = Vector::new(0.0, 1.0, 0.0);
+        let r = reflect(v, n);
+        assert_eq!(r, Vector::new(1.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn reflecting_vector_off_slanted_surface() {
+        let v = Vector::new(0.0, -1.0, 0.0);
+        let n = Vector::new(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
+        let r = reflect(v, n);
+        assert_eq!(r, Vector::new(1.0, 0.0, 0.0));
     }
 }
