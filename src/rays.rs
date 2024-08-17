@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
-use std::ops::{Index, Mul};
+use std::ops::Index;
 
-use crate::matrix::{invert_4x4, M4x4, IDENTITY_MATRIX_4X4};
+use crate::matrix::{invert_4x4, transpose, M4x4, IDENTITY_MATRIX_4X4};
 use crate::tuple::{Point, Tuple, Vector};
 use uuid::Uuid;
 
@@ -70,9 +70,62 @@ impl Sphere {
         self.transform = transform;
     }
 
-    // assumes point is always on the surface of the sphere
-    pub fn normal_at(&self, point: Point) -> Vector {
-        Vector::new(point.x, point.y, point.z).normalize()
+    /// Calculates the normal vector at a given point on the surface of the sphere, transforming
+    /// from world space to object space and back to world space correctly.
+    ///
+    /// # Arguments
+    /// * `world_point` - A `Point` in world space for which the normal vector is to be calculated.
+    ///                   This point is assumed to lie on the surface of the sphere.
+    ///
+    /// # Returns
+    /// * `Vector` - The normal vector at the given point in world space.
+    ///
+    /// # Methodology
+    /// 1. **World to Object Space Transformation**:
+    ///    - The method begins by transforming the given `world_point` into the sphere's local
+    ///      coordinate system (object space). This is achieved by applying the inverse of the
+    ///      sphere's transformation matrix. In object space, the sphere is assumed to be centered
+    ///      at the origin with a radius of 1. This simplifies the normal calculation.
+    ///      \[
+    ///      \text{object\_point} = T^{-1} \times \text{world\_point}
+    ///      \]
+    ///
+    /// 2. **Normal Calculation in Object Space**:
+    ///    - In object space, the normal at any point on the sphere's surface is simply the vector
+    ///      from the origin (the sphere's center) to the point itself. This vector is calculated
+    ///      by subtracting the origin from the `object_point`.
+    ///
+    /// 3. **Transforming the Normal to World Space**:
+    ///    - The normal vector is then transformed back to world space. However, because normals
+    ///      interact with transformations differently from points (especially under non-uniform
+    ///      scaling), the transpose of the inverse of the transformation matrix is used:
+    ///      \[
+    ///      \text{world\_normal} = (T^{-1})^{T} \times \text{object\_normal}
+    ///      \]
+    ///
+    /// 4. **Normalization and Correction**:
+    ///    - The resulting world-space normal vector is normalized to ensure it has unit length.
+    ///      Additionally, the `w` component of the normal vector is explicitly set to `0.0` to
+    ///      indicate that it represents a direction rather than a point in space.
+    ///
+    /// # Considerations
+    /// - The function assumes that the `world_point` provided is exactly on the sphere's surface.
+    /// - The matrix inversion and transposition steps are computationally intensive and must be
+    ///   carefully implemented to avoid numerical instability.
+    /// - This method is crucial for accurate lighting and shading calculations, as the normal
+    ///   vector plays a key role in determining how light interacts with the surface.
+    pub fn normal_at(&self, world_point: Point) -> Vector {
+        let object_point = invert_4x4(&self.transform).unwrap() * world_point;
+        let object_normal = object_point - Point::new_point(0.0, 0.0, 0.0);
+        // transposing the inverse matrix is necessary because it ensures that the normal vector
+        // is correctly transformed to remain perpendicular to the surface after
+        // non-uniform scaling, rotation, and other transformations
+        let world_normal = transpose(invert_4x4(&self.transform).unwrap()) * object_normal;
+        let mut normal = Vector::new(world_normal.x, world_normal.y, world_normal.z).normalize();
+        // translation can mess up the w coordinate
+        // avoid more complex code with hack / set w to 0
+        normal.w = 0.0;
+        normal
     }
 }
 
@@ -228,9 +281,10 @@ pub fn transform(ray: &Ray, translation_matrix: M4x4) -> Ray {
 #[cfg(test)]
 mod tests {
     use crate::matrix::IDENTITY_MATRIX_4X4;
-    use crate::matrix_transformations::{scaling, translation};
+    use crate::matrix_transformations::{rotation_z, scaling, translation};
     use crate::rays::{hit, intersect, transform, Intersection, Intersections, Ray, Sphere};
     use crate::tuple::{Point, Vector};
+    use std::f64::consts::{FRAC_1_SQRT_2, PI};
 
     #[test]
     fn create_ray() {
@@ -446,5 +500,26 @@ mod tests {
         let norm = s.normal_at(Point::new_point(val, val, val));
         assert_eq!(norm, Vector::new(val, val, val));
         assert_eq!(norm, norm.normalize());
+    }
+
+    #[test]
+    fn normal_on_translated_sphere() {
+        let mut s = Sphere::new();
+        s.set_transform(translation(0.0, 1.0, 0.0));
+        let n = s.normal_at(Point::new_point(0.0, 1.70711, -FRAC_1_SQRT_2));
+        assert_eq!(n, Vector::new(0.0, 0.70711, -0.70711));
+    }
+
+    #[test]
+    fn normal_on_transformed_sphere() {
+        let mut s = Sphere::new();
+        let m = scaling(1.0, 0.5, 1.0) * rotation_z(PI / 5.0);
+        s.set_transform(m);
+        let n = s.normal_at(Point::new_point(
+            0.0,
+            (2.0_f64.sqrt()) / 2.0,
+            -(2.0_f64.sqrt()) / 2.0,
+        ));
+        assert_eq!(n, Vector::new(0.0, 0.97014, -0.24254));
     }
 }
