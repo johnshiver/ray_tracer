@@ -3,6 +3,7 @@ use std::f64::consts::PI;
 use crate::canvas::Canvas;
 use crate::color::Color;
 use crate::environment::new_environment;
+use crate::light::{lighting, Material, PointLight};
 use crate::matrix_transformations::rotation_y;
 use crate::projectile::new_projectile;
 use crate::rays::{hit, intersect, Ray, Sphere};
@@ -100,13 +101,19 @@ fn analog_clock() {
 }
 
 fn cast_ray_onto_sphere() {
-    let canvas_pixels = 100;
+    let canvas_pixels = 400;
     let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
-    let red = Color::new(1.0, 0.0, 0.0); // red color
+    let mut color = Color::new(1.0, 0.0, 0.0); // red color
 
-    let shape = Sphere::new();
+    let mut shape = Sphere::new();
+    shape.set_material(Material::new());
+    shape.material.color = Color::new(1.0, 0.2, 1.0);
     // can mess around with various transformations here
     // shape.set_transform(shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0) * scaling(0.5, 1.0, 1.0));
+
+    let light_pos = Point::new_point(-10.0, 10.0, -10.0);
+    let light_color = Color::new(1.0, 1.0, 1.0);
+    let light = PointLight::new(light_pos, light_color);
 
     let wall_z = 10.0;
     let wall_size = 7.0;
@@ -118,15 +125,24 @@ fn cast_ray_onto_sphere() {
             let (world_x, world_y, world_z) =
                 compute_world_coordinates(canvas_pixels, wall_size, wall_z, x, y);
 
-            let position = Point::new_point(world_x, world_y, world_z);
+            let pos = Point::new_point(world_x, world_y, world_z);
             // create a new ray that originates from the camera (or eye)
             // and points toward a specific position on the wall in the 3D scene
             // The subtraction gives you the direction in which the ray needs to travel to hit
             // the exact point on the wall that corresponds to the pixel you’re currently processing.
-            let r = Ray::new(ray_origin, (position - ray_origin).normalize());
+            // and make sure to normalize direction
+            let r = Ray::new(ray_origin, (pos - ray_origin).normalize());
+
             let xs = intersect(&r, shape);
-            if hit(xs).is_some() {
-                canvas.write_pixel(x, y, red);
+            if hit(&xs).is_some() {
+                let closest_hit = xs[0];
+                let point = r.position(closest_hit.t);
+                let norm = closest_hit.object.normal_at(point);
+                let eye = -r.direction;
+
+                // apply lighting to color
+                color = lighting(closest_hit.object.material, light, point, eye, norm);
+                canvas.write_pixel(x, y, color);
             }
         }
     }

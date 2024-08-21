@@ -2,6 +2,7 @@ use crate::color::Color;
 use crate::rays::reflect;
 use crate::tuple::{Point, Vector};
 
+#[derive(Clone, Copy)]
 pub struct PointLight {
     position: Point,
     intensity: Color,
@@ -37,7 +38,7 @@ impl Material {
     }
 }
 
-fn lighting(
+pub fn lighting(
     material: Material,
     light: PointLight,
     point: Point,

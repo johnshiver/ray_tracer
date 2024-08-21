@@ -15,8 +15,8 @@ pub const SPHERE_ORIGIN: Tuple = Point {
 
 #[derive(Debug)]
 pub struct Ray {
-    origin: Point,
-    direction: Vector,
+    pub origin: Point,
+    pub direction: Vector,
 }
 
 impl Ray {
@@ -271,7 +271,7 @@ pub fn intersect(r: &Ray, s: Sphere) -> Intersections<Sphere> {
     Intersections::from(vec![i1, i2])
 }
 
-pub fn hit(xs: Intersections<Sphere>) -> Option<Intersection<Sphere>> {
+pub fn hit(xs: &Intersections<Sphere>) -> Option<Intersection<Sphere>> {
     xs.items
         .iter() // Iterate over the intersections
         .filter(|i| i.t >= 0.0) // Only consider intersections with t >= 0.0
@@ -405,7 +405,7 @@ mod tests {
         let i2 = Intersection::new(2.0, s);
 
         let xs = Intersections::from(vec![i1, i2]);
-        let i = hit(xs).unwrap();
+        let i = hit(&xs).unwrap();
         assert_eq!(i, i1);
     }
 
@@ -416,7 +416,7 @@ mod tests {
         let i2 = Intersection::new(1.0, s);
 
         let xs = Intersections::from(vec![i2, i1]);
-        let i = hit(xs).unwrap();
+        let i = hit(&xs).unwrap();
         assert_eq!(i, i2);
     }
 
@@ -428,7 +428,7 @@ mod tests {
 
         let xs = Intersections::from(vec![i2, i1]);
         // i should be none, implement with option
-        let i = hit(xs);
+        let i = hit(&xs);
         assert_eq!(i, None);
     }
 
