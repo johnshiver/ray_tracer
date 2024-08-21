@@ -1,6 +1,7 @@
 use std::borrow::Borrow;
 use std::ops::Index;
 
+use crate::light::Material;
 use crate::matrix::{invert_4x4, transpose, M4x4, IDENTITY_MATRIX_4X4};
 use crate::tuple::{Point, Tuple, Vector};
 use uuid::Uuid;
@@ -56,6 +57,7 @@ impl Ray {
 pub struct Sphere {
     pub id: Uuid,
     pub transform: M4x4,
+    pub material: Material,
 }
 
 impl Sphere {
@@ -63,11 +65,16 @@ impl Sphere {
         Sphere {
             id: Uuid::new_v4(),
             transform: IDENTITY_MATRIX_4X4,
+            material: Material::new(),
         }
     }
 
     pub fn set_transform(&mut self, transform: M4x4) {
         self.transform = transform;
+    }
+
+    pub fn set_material(&mut self, material: Material) {
+        self.material = material;
     }
 
     /// Calculates the normal vector at a given point on the surface of the sphere, transforming
@@ -284,6 +291,7 @@ pub fn reflect(incoming: Vector, normal: Vector) -> Vector {
 
 #[cfg(test)]
 mod tests {
+    use crate::light::Material;
     use crate::matrix::IDENTITY_MATRIX_4X4;
     use crate::matrix_transformations::{rotation_z, scaling, translation};
     use crate::rays::{
@@ -543,5 +551,21 @@ mod tests {
         let n = Vector::new(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
         let r = reflect(v, n);
         assert_eq!(r, Vector::new(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_sphere_has_default_material() {
+        let s = Sphere::new();
+        let m = s.material;
+        assert_eq!(m, Material::new());
+    }
+
+    #[test]
+    fn test_sphere_can_be_assigned_material() {
+        let mut s = Sphere::new();
+        let mut m = Material::new();
+        m.ambient = 1.0;
+        s.set_material(m);
+        assert_eq!(s.material, m);
     }
 }

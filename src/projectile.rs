@@ -4,8 +4,7 @@ use crate::tuple::{Point, Vector};
 
 pub struct Projectile {
     pub position: Point,
-    // point
-    pub velocity: Vector, // vector
+    pub velocity: Vector,
 }
 
 impl Display for Projectile {

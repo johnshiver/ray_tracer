@@ -11,6 +11,7 @@ use crate::tuple::{Point, Vector};
 mod canvas;
 mod color;
 mod environment;
+mod light;
 mod matrix;
 mod matrix_transformations;
 mod projectile;
