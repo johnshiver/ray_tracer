@@ -1,5 +1,3 @@
-use std::f64::consts::PI;
-
 use crate::canvas::Canvas;
 use crate::color::Color;
 use crate::environment::new_environment;
@@ -8,6 +6,9 @@ use crate::matrix_transformations::rotation_y;
 use crate::projectile::new_projectile;
 use crate::rays::{hit, intersect, Ray, Sphere};
 use crate::tuple::{Point, Vector};
+use rayon::prelude::*;
+use std::f64::consts::PI;
+use std::sync::Mutex;
 
 mod canvas;
 mod color;
@@ -21,10 +22,11 @@ mod tuple;
 mod utils;
 
 fn main() {
-    analog_clock();
-    create_test_image();
-    simulate_projectile();
-    cast_ray_onto_sphere();
+    // analog_clock();
+    // create_test_image();
+    // simulate_projectile();
+    // cast_ray_onto_sphere();
+    cast_ray_onto_sphere_par();
 }
 
 fn create_test_image() {
@@ -133,6 +135,7 @@ fn cast_ray_onto_sphere() {
             // and make sure to normalize direction
             let r = Ray::new(ray_origin, (pos - ray_origin).normalize());
 
+            // if our ray intersects our shape at this point, color in the canvas
             let xs = intersect(&r, shape);
             if hit(&xs).is_some() {
                 let closest_hit = xs[0];
@@ -148,6 +151,50 @@ fn cast_ray_onto_sphere() {
     }
 
     canvas.to_ppm("sphere.ppm").unwrap();
+}
+
+fn cast_ray_onto_sphere_par() {
+    let canvas_pixels = 1000;
+    let canvas = Mutex::new(Canvas::new(canvas_pixels, canvas_pixels)); // Wrap the canvas in a Mutex
+    let color = Color::new(1.0, 0.0, 0.0); // Initial color (will be updated)
+
+    let mut shape = Sphere::new();
+    shape.set_material(Material::new());
+    shape.material.color = Color::new(1.0, 0.2, 1.0);
+
+    let light_pos = Point::new_point(-10.0, 10.0, -10.0);
+    let light_color = Color::new(1.0, 1.0, 1.0);
+    let light = PointLight::new(light_pos, light_color);
+
+    let wall_z = 10.0;
+    let wall_size = 7.0;
+
+    let ray_origin = Point::new_point(0.0, 0.0, -5.0);
+
+    (0..canvas_pixels).into_par_iter().for_each(|y| {
+        for x in 0..canvas_pixels {
+            let (world_x, world_y, world_z) =
+                compute_world_coordinates(canvas_pixels, wall_size, wall_z, x, y);
+
+            let pos = Point::new_point(world_x, world_y, world_z);
+            let r = Ray::new(ray_origin, (pos - ray_origin).normalize());
+
+            let xs = intersect(&r, shape);
+            if let Some(closest_hit) = hit(&xs) {
+                let point = r.position(closest_hit.t);
+                let norm = closest_hit.object.normal_at(point);
+                let eye = -r.direction;
+
+                // Apply lighting to determine color
+                let pixel_color = lighting(closest_hit.object.material, light, point, eye, norm);
+
+                // Safely write to the canvas
+                canvas.lock().unwrap().write_pixel(x, y, pixel_color);
+            }
+        }
+    });
+
+    canvas.lock().unwrap().to_ppm("sphere2.ppm").unwrap();
 }
 
 /// Computes the world coordinates on a 3D wall for a given pixel on a 2D canvas.
